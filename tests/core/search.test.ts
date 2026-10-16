@@ -11,6 +11,7 @@
  *   7. Extract Snippet (positionsFromHighlight, extractSnippet, store integration)
  */
 
+import "../setup-home";
 import { describe, test, expect, it, beforeEach, afterEach } from "vitest";
 import { strict as assert } from "node:assert";
 import { tmpdir } from "node:os";

@@ -6,6 +6,7 @@
  *   - cli-hook-path.test.ts (forward-slash hook paths)
  *   - package-exports.test.ts (public API surface)
  */
+import "../setup-home";
 import { describe, it, test, expect, beforeEach, afterEach } from "vitest";
 import { strict as assert } from "node:assert";
 import { readFileSync, existsSync, accessSync, constants, mkdirSync, writeFileSync, rmSync, readdirSync, cpSync, symlinkSync, lstatSync } from "node:fs";
