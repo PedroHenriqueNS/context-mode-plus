@@ -23,6 +23,7 @@
  * Run: npx vitest run tests/core/echo-commands.test.ts
  */
 
+import "../setup-home";
 import { spawn, type ChildProcess } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";

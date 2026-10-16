@@ -3,6 +3,7 @@
  * code back to the model. The echo is still prepended to INDEXED content so
  * ctx_search hits keep their provenance.
  */
+import "../setup-home";
 import { spawn, type ChildProcess } from "node:child_process";
 import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";

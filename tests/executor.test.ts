@@ -1,6 +1,6 @@
-import { describe, test, expect, afterAll } from "vitest";
+import { describe, test, expect, afterAll, onTestFinished } from "vitest";
 import { strict as assert } from "node:assert";
-import { existsSync, writeFileSync, mkdirSync, rmSync } from "node:fs";
+import { existsSync, writeFileSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import {
@@ -1711,9 +1711,13 @@ describe("Edge Cases", () => {
 describe("Temp Cleanup Resilience", () => {
   test("concurrent executions all return valid results (EBUSY resilience)", async () => {
     const count = 15;
+    // The script writes f0..f2.tmp into its cwd — keep them out of the repo root.
+    const scratch = mkdtempSync(join(tmpdir(), "ctx-exec-ebusy-"));
+    onTestFinished(() => rmSync(scratch, { recursive: true, force: true }));
     const promises = Array.from({ length: count }, (_, i) =>
       executor.execute({
         language: "javascript",
+        cwd: scratch,
         code: `
           const fs = require('fs');
           const path = require('path');

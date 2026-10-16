@@ -11,6 +11,7 @@
  * Run: npx vitest run tests/core/server.test.ts
  */
 
+import "../setup-home";
 import { strict as assert } from "node:assert";
 import { spawn, spawnSync, execSync, type ChildProcess } from "node:child_process";
 import {

@@ -21,6 +21,9 @@ process.env.HOMEPATH = fakeHome.slice(root.length) || root;
 // Prevent CONTEXT_MODE_BRIDGE_DEPTH from leaking in when Pi's MCP child
 // spawned with depth=1 and that env persisted into the test runner.
 delete process.env.CONTEXT_MODE_BRIDGE_DEPTH;
+// start.mjs and the hooks honor CLAUDE_CONFIG_DIR over HOME — a developer's
+// value would point spawned children back at their real Claude config.
+delete process.env.CLAUDE_CONFIG_DIR;
 
 // `node:os` mock: defer to `withIsolatedEnv()` when a scoped fake HOME is
 // active; otherwise return the suite-wide fakeHome. This lets tests opt into
