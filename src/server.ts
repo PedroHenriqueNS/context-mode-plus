@@ -1372,6 +1372,8 @@ export function formatBatchQueryResults(
 ): string[] {
   const sections: string[] = [];
   let outputSize = 0;
+  // plus: section key -> first query that showed it; later queries get a pointer.
+  const seen = new Map<string, string>();
 
   // When scope is "global", searchWithFallback receives `undefined` for the
   // source filter, which makes it query the entire persistent index instead
@@ -1390,6 +1392,15 @@ export function formatBatchQueryResults(
     sections.push("");
     if (results.length > 0) {
       for (const result of results) {
+        const key = `${result.source}\u0000${result.title}`;
+        const firstQuery = seen.get(key);
+        if (firstQuery !== undefined && firstQuery !== query) {
+          const pointer = `(mesma seção de "## ${firstQuery}")`;
+          sections.push(`### ${result.title}`, pointer, "");
+          outputSize += pointer.length + result.title.length;
+          continue;
+        }
+        seen.set(key, query);
         const snippet = extractSnippet(result.content, query, 3000, result.highlighted);
         sections.push(`### ${result.title}`);
         sections.push(snippet);
