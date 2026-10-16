@@ -29,6 +29,7 @@ await runHook(async () => {
   const { routePreToolUse, initSecurity } = await import("./core/routing.mjs");
   const { subagentHasCtxTools } = await import("./core/subagent-tools.mjs");
   const { loadUserRules } = await import("./core/user-rules.mjs");
+  const { isRtkBashHookActive } = await import("./core/rtk.mjs");
   const { formatDecision } = await import("./core/formatters.mjs");
   const { parseStdin, getInputProjectDir, getSessionId, resolveConfigDir } = await import("./session-helpers.mjs");
 
@@ -170,6 +171,15 @@ await runHook(async () => {
 
   // ─── Route and format response ───
   const routeOptions = { mcpToolsAvailable: !isSubagentContext };
+  if (tool === "Bash" && !isSubagentContext) {
+    // context-mode-plus: with RTK's Bash hook active, deny instead of `modify`.
+    const configDir = resolveConfigDir();
+    routeOptions.rtkActive = isRtkBashHookActive([
+      resolve(configDir, "settings.json"),
+      resolve(projectDir, ".claude", "settings.json"),
+      resolve(projectDir, ".claude", "settings.local.json"),
+    ]);
+  }
   if (tool === "Agent") {
     // context-mode-plus: only brief subagents that can call ctx tools, with the user's rules if present.
     const configDir = resolveConfigDir();

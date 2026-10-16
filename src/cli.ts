@@ -40,6 +40,7 @@ import {
   type ResolvedStorageDir,
 } from "./session/db.js";
 import { ContentStore } from "./store.js";
+import { probeRtk } from "./rtk-doctor.js";
 import { readToolDenyPatterns, evaluateFilePath } from "./security.js";
 // v1.0.128 — Issue #559 sibling MCP kill helpers (see PR-559-560-FIX-DESIGN.md).
 import { discoverSiblingMcpPids, killSiblingMcpServers } from "./util/sibling-mcp.js";
@@ -1196,6 +1197,13 @@ async function doctor(): Promise<number> {
         color.dim(" — could not verify against npm registry"),
     );
   }
+
+  // RTK (context-mode-plus) — informational only, never changes the exit code.
+  try {
+    const rtk = probeRtk();
+    p.log.info(`RTK: ${rtk.summary}`);
+    for (const w of rtk.warnings) p.log.warn(color.yellow(w));
+  } catch { /* informational */ }
 
   // Summary
   if (criticalFails > 0) {

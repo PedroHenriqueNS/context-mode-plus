@@ -33,6 +33,18 @@ function mcpRedirect(result, mcpToolsAvailable = true) {
 import { homedir, tmpdir } from "node:os";
 import { resolve } from "node:path";
 
+/**
+ * context-mode-plus: Bash redirect. With RTK's Bash hook active both hooks would
+ * return `updatedInput` (ambiguous), so deny with the same message instead of modify.
+ */
+function bashRedirect(message, meta, { rtkActive, mcpToolsAvailable }) {
+  const result = rtkActive
+    ? { action: "deny", reason: message }
+    : { action: "modify", updatedInput: { command: `echo "${message}"` } };
+  if (meta) result.redirectMeta = meta;
+  return mcpRedirect(result, mcpToolsAvailable);
+}
+
 // Guidance throttle: show each advisory type at most once per session.
 // Hybrid approach:
 //   - In-memory Set for same-process (OpenCode ts-plugin, vitest)
@@ -670,9 +682,12 @@ function getPlatformSettingsPath(platform) {
  *   the Agent's subagent type cannot call ctx_* tools; no routing is injected.
  * @param {string|null} [options.subagentRules] - context-mode-plus: the user's
  *   rules, injected into subagent prompts instead of the built-in block.
+ * @param {boolean} [options.rtkActive=false] - context-mode-plus: RTK's Bash hook
+ *   is registered; Bash redirects deny instead of returning `modify`.
  */
 export function routePreToolUse(toolName, toolInput, projectDir, platform, sessionId, options = {}) {
   const mcpToolsAvailable = options.mcpToolsAvailable !== false;
+  const rtkActive = options.rtkActive === true;
 
   // ─── Opt-in fail-closed gate (#468 follow-up) ───
   // Default behavior on security-module load failure is fail-OPEN (a stderr
@@ -769,13 +784,10 @@ export function routePreToolUse(toolName, toolInput, projectDir, platform, sessi
       });
 
       if (hasDangerousSegment) {
-        return mcpRedirect({
-          action: "modify",
-          updatedInput: {
-            command: `echo "context-mode: curl/wget redirected. Call ${t("ctx_execute")}(language, code) to fetch the URL, derive your answer in code, and print only the result — the raw HTTP body stays in the sandbox instead of entering your conversation. Or call ${t("ctx_fetch_and_index")}(url, source) when you want to query the response later via ${t("ctx_search")}. Both have full network access. Retry the same call on a transient DNS error (EAI_AGAIN, ETIMEDOUT, ENETUNREACH)."`,
-          },
+        return bashRedirect(
+          `context-mode: curl/wget redirected. Call ${t("ctx_execute")}(language, code) to fetch the URL, derive your answer in code, and print only the result — the raw HTTP body stays in the sandbox instead of entering your conversation. Or call ${t("ctx_fetch_and_index")}(url, source) when you want to query the response later via ${t("ctx_search")}. Both have full network access. Retry the same call on a transient DNS error (EAI_AGAIN, ETIMEDOUT, ENETUNREACH).`,
           // D2 PRD Phase 3.1: marker payload for PostToolUse byte accounting.
-          redirectMeta: {
+          {
             tool: "Bash",
             type: "bash-redirected",
             // 8192 byte default — typical curl/wget HTTP body the agent would
@@ -783,7 +795,8 @@ export function routePreToolUse(toolName, toolInput, projectDir, platform, sessi
             bytesAvoided: 8192,
             commandSummary: command.slice(0, 200),
           },
-        }, mcpToolsAvailable);
+          { rtkActive, mcpToolsAvailable },
+        );
       }
       // All segments safe → allow through
       return null;
@@ -800,12 +813,11 @@ export function routePreToolUse(toolName, toolInput, projectDir, platform, sessi
       /requests\.(get|post|put)\s*\(/i.test(noHeredoc) ||
       /http\.(get|request)\s*\(/i.test(noHeredoc)
     ) {
-      return mcpRedirect({
-        action: "modify",
-        updatedInput: {
-          command: `echo "context-mode: Inline HTTP redirected. Call ${t("ctx_execute")}(language, code) to fetch, derive your answer in code, and console.log() only the result — the raw response body stays in the sandbox instead of entering your conversation. Full network access. Retry the same call on a transient DNS error (EAI_AGAIN, ETIMEDOUT, ENETUNREACH)."`,
-        },
-      }, mcpToolsAvailable);
+      return bashRedirect(
+        `context-mode: Inline HTTP redirected. Call ${t("ctx_execute")}(language, code) to fetch, derive your answer in code, and console.log() only the result — the raw response body stays in the sandbox instead of entering your conversation. Full network access. Retry the same call on a transient DNS error (EAI_AGAIN, ETIMEDOUT, ENETUNREACH).`,
+        undefined,
+        { rtkActive, mcpToolsAvailable },
+      );
     }
 
     // Build tools (gradle, maven, sbt) → redirect to execute sandbox (Issue #38, #406).
@@ -813,12 +825,11 @@ export function routePreToolUse(toolName, toolInput, projectDir, platform, sessi
     // Word-boundary guard prevents matching `gradle-wrapper-config`, `mvnDocker`, etc.
     if (/(^|\s|&&|\||\;)(\.\/gradlew|gradlew|gradle|\.\/mvnw|mvnw|mvn|\.\/sbt|sbt)(\s|$)/i.test(stripped)) {
       const safeCmd = command.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-      return mcpRedirect({
-        action: "modify",
-        updatedInput: {
-          command: `echo "context-mode: Build tool redirected. Call ${t("ctx_execute")}(language: \\"shell\\", code: \\"${safeCmd} 2>&1 | tail -30\\") to run the build and print only the tail — the verbose build log stays in the sandbox instead of entering your conversation. For more targeted output, replace \\"tail -30\\" with \\"grep -E '(error|warning|FAIL|✗|×)'\\" or similar, so only the lines that matter come back."`,
-        },
-      }, mcpToolsAvailable);
+      return bashRedirect(
+        `context-mode: Build tool redirected. Call ${t("ctx_execute")}(language: \\"shell\\", code: \\"${safeCmd} 2>&1 | tail -30\\") to run the build and print only the tail — the verbose build log stays in the sandbox instead of entering your conversation. For more targeted output, replace \\"tail -30\\" with \\"grep -E '(error|warning|FAIL|✗|×)'\\" or similar, so only the lines that matter come back.`,
+        undefined,
+        { rtkActive, mcpToolsAvailable },
+      );
     }
 
     // Skip the routing nudge for commands whose output is structurally
