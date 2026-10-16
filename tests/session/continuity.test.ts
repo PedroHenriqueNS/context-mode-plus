@@ -28,6 +28,8 @@ function runHook(input: Record<string, unknown>) {
     input: JSON.stringify(input),
     encoding: "utf-8",
     timeout: 30_000,
+    // plus: keep the developer's own ~/.claude/context-mode-usage.md out of the built-in block assertions
+    env: { ...process.env, CLAUDE_CONFIG_DIR: join(tmpdir(), "ctxmode-no-user-rules") },
   });
   return {
     exitCode: result.status ?? 1,

@@ -24,6 +24,7 @@ import { runHook } from "./run-hook.mjs";
 await runHook(async () => {
   const { createRoutingBlock } = await import("./routing-block.mjs");
   const { createToolNamer } = await import("./core/tool-naming.mjs");
+  const { loadUserRules } = await import("./core/user-rules.mjs");
   const { detectPlatformFromEnv } = await import("./core/platform-detect.mjs");
   const { buildAutoInjection } = await import("./auto-injection.mjs");
   const {
@@ -46,7 +47,6 @@ await runHook(async () => {
 
   const detectedPlatform = detectPlatformFromEnv();
   const toolNamer = createToolNamer(detectedPlatform);
-  const ROUTING_BLOCK = createRoutingBlock(toolNamer);
 
   // Resolve absolute path for imports (fileURLToPath for Windows compat)
   const HOOK_DIR = dirname(fileURLToPath(import.meta.url));
@@ -163,7 +163,8 @@ await runHook(async () => {
     }
   } catch { /* best effort, never block session start */ }
 
-  let additionalContext = ROUTING_BLOCK;
+  // context-mode-plus: the user's context-mode-usage.md replaces the built-in routing block.
+  let additionalContext = loadUserRules(resolveConfigDir()) ?? createRoutingBlock(toolNamer);
 
   // ─── #558: surface security init failure as agent-facing context ───
   //
