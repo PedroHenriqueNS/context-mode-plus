@@ -217,9 +217,31 @@ await runHook(async () => {
     } catch { /* best-effort — never block the hook */ }
 
     db.close();
+
+    // ─── context-mode-plus: event-driven nudge — the only stdout write, after db work ───
+    // A subagent without ctx tools cannot act on it, so it gets none.
+    const { decidePostNudge } = await import("./core/post-nudges.mjs");
+    let canNudge = true;
+    if (input.agent_id != null || input.agent_type != null) {
+      const { subagentHasCtxTools } = await import("./core/subagent-tools.mjs");
+      const { resolveConfigDir } = await import("./session-helpers.mjs");
+      canNudge = subagentHasCtxTools(input.agent_type ?? "", { configDir: resolveConfigDir(), projectDir });
+    }
+    const nudge = canNudge ? decidePostNudge({
+      toolName: input.tool_name,
+      toolInput: input.tool_input ?? {},
+      responseText: typeof input.tool_response === "string"
+        ? input.tool_response
+        : JSON.stringify(input.tool_response ?? ""),
+      sessionId,
+    }) : null;
+    if (nudge) {
+      process.stdout.write(JSON.stringify({
+        hookSpecificOutput: { hookEventName: "PostToolUse", additionalContext: nudge },
+      }) + "\n");
+    }
   } catch {
     // PostToolUse must never block the session — silent fallback
   }
 
-  // PostToolUse hooks don't need hookSpecificOutput
 });

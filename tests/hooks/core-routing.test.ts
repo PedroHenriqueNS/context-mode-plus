@@ -39,8 +39,6 @@ let resetGuidanceThrottle: (sessionId?: string) => void;
 let initSecurity: (buildDir: string) => Promise<boolean>;
 let ROUTING_BLOCK: string;
 let createRoutingBlock: (t: any, options?: { includeCommands?: boolean; toolSearchBootstrap?: boolean }) => string;
-let READ_GUIDANCE: string;
-let GREP_GUIDANCE: string;
 
 beforeAll(async () => {
   const mod = await import("../../hooks/core/routing.mjs");
@@ -51,8 +49,6 @@ beforeAll(async () => {
   const constants = await import("../../hooks/routing-block.mjs");
   ROUTING_BLOCK = constants.ROUTING_BLOCK;
   createRoutingBlock = constants.createRoutingBlock;
-  READ_GUIDANCE = constants.READ_GUIDANCE;
-  GREP_GUIDANCE = constants.GREP_GUIDANCE;
 });
 
 // MCP readiness sentinel — most tests expect MCP to be ready (deny behavior).
@@ -244,10 +240,8 @@ describe("routePreToolUse", () => {
       expect(result).toBeNull();
     });
 
-    it("allows npm install with BASH_GUIDANCE context", () => {
-      const result = routePreToolUse("Bash", { command: "npm install" });
-      expect(result).not.toBeNull();
-      expect(result!.action).toBe("context");
+    it("allows npm install with no generic nudge (nudges are PostToolUse-driven)", () => {
+      expect(routePreToolUse("Bash", { command: "npm install" })).toBeNull();
     });
 
     it("redirects ./gradlew build to execute sandbox", () => {
@@ -293,9 +287,8 @@ describe("routePreToolUse", () => {
       const result = routePreToolUse("Bash", {
         command: 'find . -name "run gradle build to compile"',
       });
-      expect(result).not.toBeNull();
-      // stripped version removes quoted content → no gradle match → context
-      expect(result!.action).toBe("context");
+      // stripped version removes quoted content → no gradle match → passthrough
+      expect(result).toBeNull();
     });
 
     // Issue #406 — sbt added alongside gradle/maven
@@ -331,13 +324,8 @@ describe("routePreToolUse", () => {
   // ─── Read routing ──────────────────────────────────────
 
   describe("Read tool", () => {
-    it("returns context action with READ_GUIDANCE", () => {
-      const result = routePreToolUse("Read", {
-        file_path: "/some/file.ts",
-      });
-      expect(result).not.toBeNull();
-      expect(result!.action).toBe("context");
-      expect(result!.additionalContext).toBe(READ_GUIDANCE);
+    it("returns null — no generic Read guidance (nudges are PostToolUse-driven)", () => {
+      expect(routePreToolUse("Read", { file_path: "/some/file.ts" })).toBeNull();
     });
 
     it("treats agy view_file AbsolutePath payloads as Read", () => {
@@ -349,23 +337,15 @@ describe("routePreToolUse", () => {
         "antigravity-cli",
         "agy-view-file",
       );
-      expect(result).not.toBeNull();
-      expect(result!.action).toBe("context");
-      expect(result!.additionalContext).toContain("ctx_execute_file");
+      expect(result).toBeNull();
     });
   });
 
   // ─── Grep routing ──────────────────────────────────────
 
   describe("Grep tool", () => {
-    it("returns context action with GREP_GUIDANCE", () => {
-      const result = routePreToolUse("Grep", {
-        pattern: "TODO",
-        path: "/some/dir",
-      });
-      expect(result).not.toBeNull();
-      expect(result!.action).toBe("context");
-      expect(result!.additionalContext).toBe(GREP_GUIDANCE);
+    it("returns null — no generic Grep guidance", () => {
+      expect(routePreToolUse("Grep", { pattern: "TODO", path: "/some/dir" })).toBeNull();
     });
   });
 

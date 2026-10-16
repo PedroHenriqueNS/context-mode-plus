@@ -165,15 +165,14 @@ describe("JetBrains Copilot hooks", () => {
   // ── PreToolUse ───────────────────────────────────────────
 
   describe("pretooluse.mjs", () => {
-    test("run_in_terminal: injects guidance additionalContext", () => {
+    test("run_in_terminal: no generic advisory", () => {
       const result = runHook("pretooluse.mjs", {
         tool_name: "run_in_terminal",
         tool_input: { command: "npm test" },
       }, jetbrainsEnv());
 
       expect(result.exitCode).toBe(0);
-      const out = JSON.parse(result.stdout);
-      expect(out.hookSpecificOutput.additionalContext).toContain("ctx_batch_execute");
+      expect(result.stdout.trim()).toBe("");
     });
 
     test("handles empty input gracefully (no crash)", () => {

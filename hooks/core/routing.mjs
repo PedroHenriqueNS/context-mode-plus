@@ -11,13 +11,13 @@
  */
 
 import {
-  ROUTING_BLOCK, READ_GUIDANCE, GREP_GUIDANCE, BASH_GUIDANCE, EXTERNAL_MCP_GUIDANCE,
-  createRoutingBlock, createReadGuidance, createGrepGuidance, createBashGuidance,
+  ROUTING_BLOCK, EXTERNAL_MCP_GUIDANCE,
+  createRoutingBlock,
   createExternalMcpGuidance,
 } from "../routing-block.mjs";
 import { createToolNamer } from "./tool-naming.mjs";
 import { isMCPReady } from "./mcp-ready.mjs";
-import { existsSync, mkdirSync, rmSync, rmdirSync, readdirSync, unlinkSync, openSync, closeSync, readFileSync, writeFileSync, statSync, constants as fsConstants } from "node:fs";
+import { existsSync, mkdirSync, rmSync, rmdirSync, readdirSync, unlinkSync, readFileSync, writeFileSync, statSync } from "node:fs";
 
 /**
  * Guard for actions that redirect to MCP tools (#230).
@@ -45,11 +45,7 @@ function bashRedirect(message, meta, { rtkActive, mcpToolsAvailable }) {
   return mcpRedirect(result, mcpToolsAvailable);
 }
 
-// Guidance throttle: show each advisory type at most once per session.
-// Hybrid approach:
-//   - In-memory Set for same-process (OpenCode ts-plugin, vitest)
-//   - File-based markers with O_EXCL for cross-process atomicity
-//     (Claude Code, Gemini, Cursor, VS Code Copilot)
+// Guidance throttle: periodic cadence counters, in memory plus file-backed per session.
 //
 // Session identity is resolved in this order:
 //   1. sessionId passed in by the caller (stable across hook invocations)
@@ -60,7 +56,6 @@ function bashRedirect(message, meta, { rtkActive, mcpToolsAvailable }) {
 // that have a stable session identifier (e.g. from the hook payload) should
 // pass it to routePreToolUse so the marker directory stays consistent across
 // invocations of the same logical session.
-const _guidanceShown = new Set();
 
 // Periodic-guidance counters: how many times each (sessionId, type) pair has
 // fired the periodic branch. Keyed by `${sessionId-or-ppid}::${type}`.
@@ -88,37 +83,6 @@ function getExternalMcpNudgeEvery() {
   return parsed;
 }
 
-// #817: size threshold so small Bash calls skip the routing nudge.
-//
-// PreToolUse fires BEFORE the command runs, so the actual output size is
-// unknowable here. The only deterministic pre-execution signal is the command
-// string itself. The Gemini CLI adapter solves the same over-interception
-// problem with a matcher that only fires on large-output tools — "avoids
-// unnecessary hook overhead on lightweight tools" (README). We mirror that at
-// the routing layer: when CONTEXT_MODE_BASH_NUDGE_MIN_COMMAND_BYTES is set to
-// N>0, an unbounded Bash command whose UTF-8 byte length is below N is treated
-// as expected-lightweight and the generic routing nudge is suppressed.
-//
-// Default is 0 (unset) → CURRENT BEHAVIOR: every unbounded command is nudged.
-// This preserves the context-saving guarantee for large outputs by default —
-// the threshold is strictly opt-in. Bounds [0, 100000]; invalid/zero/negative
-// values fall back to 0 (disabled). The threshold gates ONLY the generic Bash
-// nudge — curl/wget, inline-HTTP, and build-tool redirects run earlier and are
-// never relaxed, because those are deterministic floods regardless of command
-// length.
-const BASH_NUDGE_MIN_BYTES_ENV = "CONTEXT_MODE_BASH_NUDGE_MIN_COMMAND_BYTES";
-const BASH_NUDGE_MIN_BYTES_MAX = 100_000;
-
-function getBashNudgeMinCommandBytes() {
-  const raw = process.env[BASH_NUDGE_MIN_BYTES_ENV];
-  if (raw == null || raw === "") return 0;
-  const parsed = Number.parseInt(raw, 10);
-  if (!Number.isFinite(parsed) || parsed <= 0 || parsed > BASH_NUDGE_MIN_BYTES_MAX) {
-    return 0;
-  }
-  return parsed;
-}
-
 function defaultGuidanceId() {
   return process.env.VITEST_WORKER_ID
     ? `${process.ppid}-w${process.env.VITEST_WORKER_ID}`
@@ -130,33 +94,8 @@ function guidanceDirFor(sessionId) {
   return resolve(tmpdir(), `context-mode-guidance-${id}`);
 }
 
-function guidanceOnce(type, content, sessionId) {
-  // Fast path: in-memory (same process)
-  if (_guidanceShown.has(type)) return null;
-
-  // Resolve marker directory for this session (stable even on Windows/Git Bash
-  // where process.ppid shifts every invocation — see #298).
-  const dir = guidanceDirFor(sessionId);
-  try { mkdirSync(dir, { recursive: true }); } catch {}
-
-  // Atomic create-or-fail: O_CREAT | O_EXCL | O_WRONLY
-  // First process to create the file wins; others get EEXIST.
-  const marker = resolve(dir, type);
-  try {
-    const fd = openSync(marker, fsConstants.O_CREAT | fsConstants.O_EXCL | fsConstants.O_WRONLY);
-    closeSync(fd);
-  } catch {
-    // EEXIST = another process already created it, or we did in-memory
-    _guidanceShown.add(type);
-    return null;
-  }
-
-  _guidanceShown.add(type);
-  return { action: "context", additionalContext: content };
-}
-
 /**
- * Like guidanceOnce, but fires on a periodic cadence (calls 1, period+1,
+ * Fires on a periodic cadence (calls 1, period+1,
  * 2·period+1, …) rather than once per session.
  *
  * Motivation: external-MCP tool runs can span 50+ calls (e.g. a Jira/Slack
@@ -170,7 +109,7 @@ function guidanceOnce(type, content, sessionId) {
  * invocations. On any IO/parse failure we fall back to firing — losing a
  * counter is preferable to silently dropping the advisory.
  */
-function guidancePeriodic(type, content, sessionId, period) {
+export function guidancePeriodic(type, content, sessionId, period) {
   const safePeriod = Math.max(1, period | 0);
   const id = sessionId ? `s-${sessionId}` : defaultGuidanceId();
   const key = `${id}::${type}`;
@@ -224,7 +163,6 @@ function rmSyncRobust(dir) {
 }
 
 export function resetGuidanceThrottle(sessionId) {
-  _guidanceShown.clear();
   _guidanceCounters.clear();
   // Clear ppid-based dir (legacy / fallback callers) and the sessionId dir if given
   rmSyncRobust(guidanceDirFor());
@@ -711,9 +649,6 @@ export function routePreToolUse(toolName, toolInput, projectDir, platform, sessi
 
   // Build platform-specific guidance/routing content
   const routingBlock = platform ? createRoutingBlock(t) : ROUTING_BLOCK;
-  const readGuidance = platform ? createReadGuidance(t) : READ_GUIDANCE;
-  const grepGuidance = platform ? createGrepGuidance(t) : GREP_GUIDANCE;
-  const bashGuidance = platform ? createBashGuidance(t) : BASH_GUIDANCE;
 
   // Normalize platform-specific tool name to canonical
   const canonical = TOOL_ALIASES[toolName] ?? toolName;
@@ -832,59 +767,39 @@ export function routePreToolUse(toolName, toolInput, projectDir, platform, sessi
       );
     }
 
-    // Skip the routing nudge for commands whose output is structurally
-    // bounded (#463) — pwd, whoami, git status, --version probes, etc.
-    // Conservative: any pipe/redirect/chain disqualifies, unknown commands
-    // still get the nudge.
-    if (isStructurallyBounded(command)) {
-      return null;
-    }
-
-    // #817: opt-in size threshold. When the operator configures
-    // CONTEXT_MODE_BASH_NUDGE_MIN_COMMAND_BYTES, a short unbounded command is
-    // treated as expected-lightweight and passes through untouched — reserving
-    // the nudge for commands large/complex enough to plausibly flood context.
-    // Default (0) preserves current behavior, so large-output savings are not
-    // weakened unless the operator explicitly opts in.
-    const minCommandBytes = getBashNudgeMinCommandBytes();
-    if (minCommandBytes > 0 && Buffer.byteLength(command, "utf8") < minCommandBytes) {
-      return null;
-    }
-
-    // allow all other Bash commands, but inject routing nudge (once per session)
-    return guidanceOnce("bash", bashGuidance, sessionId);
+    // context-mode-plus: the generic once-per-session Bash nudge is gone; PostToolUse
+    // nudges on the actual output size instead (hooks/core/post-nudges.mjs).
+    return null;
   }
 
-  // ─── Read: nudge toward execute_file + large-file byte accounting ───
+  // ─── Read: large-file byte accounting only (nudges are event-driven, see post-nudges.mjs) ───
   // D2 PRD Phase 4 (slices 4.4–4.6): when the file is large enough to flood
   // context, attach `redirectMeta` so PostToolUse can emit a `read-redirected`
-  // event with the actual file size as bytes_avoided. Threshold = 50 000 bytes;
-  // smaller reads stay on the existing one-shot guidance nudge.
+  // event with the actual file size as bytes_avoided. Threshold = 50 000 bytes.
+  // The decision carries no text for the model: action "none" formats to no output.
   if (canonical === "Read") {
     const filePath = getReadFilePath(toolInput);
     if (filePath) {
       try {
         const st = statSync(filePath);
         if (st.isFile() && st.size > 50_000) {
-          const decision = guidanceOnce("read", readGuidance, sessionId)
-            ?? { action: "context", additionalContext: readGuidance };
-          decision.redirectMeta = {
-            tool: "Read",
-            type: "read-redirected",
-            bytesAvoided: st.size,
-            commandSummary: String(filePath).slice(0, 200),
+          return {
+            action: "none",
+            redirectMeta: {
+              tool: "Read",
+              type: "read-redirected",
+              bytesAvoided: st.size,
+              commandSummary: String(filePath).slice(0, 200),
+            },
           };
-          return decision;
         }
-      } catch { /* file missing or unreadable — fall through to plain guidance */ }
+      } catch { /* file missing or unreadable — no marker */ }
     }
-    return guidanceOnce("read", readGuidance, sessionId);
+    return null;
   }
 
-  // ─── Grep: nudge toward execute (once per session) ───
-  if (canonical === "Grep") {
-    return guidanceOnce("grep", grepGuidance, sessionId);
-  }
+  // ─── Grep: no generic nudge ───
+  if (canonical === "Grep") return null;
 
   // ─── WebFetch: deny + redirect to sandbox ───
   if (canonical === "WebFetch") {

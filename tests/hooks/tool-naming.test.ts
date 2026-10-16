@@ -359,62 +359,25 @@ describe("routePreToolUse with platform parameter", () => {
     expect(result).toBeNull();
   });
 
-  it("Read guidance uses vscode-copilot tool names when platform=vscode-copilot", () => {
-    const result = routePreToolUse("Read", { file_path: "/tmp/a.ts" }, "/tmp", "vscode-copilot");
-    expect(result).not.toBeNull();
-    expect(result!.action).toBe("context");
-    expect(result!.additionalContext).toContain("context-mode_ctx_execute_file");
-    expect(result!.additionalContext).not.toContain("mcp__plugin_context-mode_context-mode__");
-  });
-
-  it("Grep guidance uses zed tool names when platform=zed", () => {
-    const result = routePreToolUse("Grep", { pattern: "TODO" }, "/tmp", "zed");
-    expect(result).not.toBeNull();
-    expect(result!.action).toBe("context");
-    expect(result!.additionalContext).toContain("mcp:context-mode:ctx_execute");
-  });
-
-  it("Bash guidance uses openclaw bare names when platform=openclaw", () => {
-    // Use an unbounded command so the #463 structurally-bounded allowlist
-    // does not short-circuit the guidance — this test is about platform
-    // tool-naming inside the guidance, not allowlist behavior.
-    const result = routePreToolUse("Bash", { command: "npm install" }, "/tmp", "openclaw");
-    expect(result).not.toBeNull();
-    expect(result!.action).toBe("context");
-    expect(result!.additionalContext).toContain("ctx_batch_execute");
-    expect(result!.additionalContext).toContain("ctx_execute");
-    expect(result!.additionalContext).not.toContain("mcp__");
+  // context-mode-plus: Read/Grep/Bash carry no generic advisory (nudges are PostToolUse-driven).
+  it("Read, Grep and Bash produce no generic advisory on any platform", () => {
+    expect(routePreToolUse("Read", { file_path: "/tmp/a.ts" }, "/tmp", "vscode-copilot")).toBeNull();
+    expect(routePreToolUse("Grep", { pattern: "TODO" }, "/tmp", "zed")).toBeNull();
+    expect(routePreToolUse("Bash", { command: "npm install" }, "/tmp", "openclaw")).toBeNull();
   });
 
   it("OpenClaw lowercase native tools route through canonical aliases", () => {
-    const exec = routePreToolUse("exec", { command: "npm install" }, "/tmp", "openclaw");
-    expect(exec).not.toBeNull();
-    expect(exec!.action).toBe("context");
-    expect(exec!.additionalContext).toContain("ctx_batch_execute");
-
-    const read = routePreToolUse("read", { file_path: "/tmp/a.ts" }, "/tmp", "openclaw");
-    expect(read).not.toBeNull();
-    expect(read!.action).toBe("context");
-    expect(read!.additionalContext).toContain("ctx_execute_file");
-
-    const search = routePreToolUse("search", { pattern: "TODO" }, "/tmp", "openclaw");
-    expect(search).not.toBeNull();
-    expect(search!.action).toBe("context");
-    expect(search!.additionalContext).toContain("ctx_execute");
+    expect(routePreToolUse("exec", { command: "npm install" }, "/tmp", "openclaw")).toBeNull();
+    expect(routePreToolUse("read", { file_path: "/tmp/a.ts" }, "/tmp", "openclaw")).toBeNull();
+    expect(routePreToolUse("search", { pattern: "TODO" }, "/tmp", "openclaw")).toBeNull();
+    // the alias still reaches the Bash redirect branch
+    const curl = routePreToolUse("exec", { command: "curl https://example.com" }, "/tmp", "openclaw");
+    expect(curl?.action).toBe("modify");
   });
 
-  it("Read guidance uses agy context-mode/<tool> names when platform=antigravity-cli", () => {
+  it("agy view_file routes as Read → no generic advisory", () => {
     resetGuidanceThrottle();
-    const result = routePreToolUse(
-      "view_file",
-      { AbsolutePath: "/tmp/a.ts" },
-      "/tmp",
-      "antigravity-cli",
-    );
-    expect(result).not.toBeNull();
-    expect(result!.action).toBe("context");
-    expect(result!.additionalContext).toContain("context-mode/ctx_execute_file");
-    expect(result!.additionalContext).not.toContain("mcp__context-mode__ctx_execute_file");
+    expect(routePreToolUse("view_file", { AbsolutePath: "/tmp/a.ts" }, "/tmp", "antigravity-cli")).toBeNull();
   });
 
   it("build tool redirect uses platform tool names when platform=gemini-cli", () => {
@@ -454,27 +417,9 @@ describe("routePreToolUse with platform parameter", () => {
       expect(result!.reason).toContain("WebFetch redirected");
     });
 
-    it("read_file routes as Read → context guidance", () => {
-      const result = routePreToolUse(
-        "read_file",
-        { file_path: "/tmp/a.ts" },
-        "/tmp",
-        "qwen-code",
-      );
-      expect(result).not.toBeNull();
-      expect(result!.action).toBe("context");
-      expect(result!.additionalContext).toContain("ctx_execute_file");
-    });
-
-    it("grep_search routes as Grep → context guidance", () => {
-      const result = routePreToolUse(
-        "grep_search",
-        { pattern: "TODO" },
-        "/tmp",
-        "qwen-code",
-      );
-      expect(result).not.toBeNull();
-      expect(result!.action).toBe("context");
+    it("read_file / grep_search route as Read / Grep → no generic advisory", () => {
+      expect(routePreToolUse("read_file", { file_path: "/tmp/a.ts" }, "/tmp", "qwen-code")).toBeNull();
+      expect(routePreToolUse("grep_search", { pattern: "TODO" }, "/tmp", "qwen-code")).toBeNull();
     });
   });
 });

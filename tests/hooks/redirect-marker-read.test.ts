@@ -147,6 +147,12 @@ describe("D2 Phase 4 — read-redirected marker pattern", () => {
     expect(content.startsWith(`Read:read-redirected:${LARGE_SIZE}:`)).toBe(true);
   });
 
+  test("4.4b: the large-Read redirect emits no text to the model (marker only)", () => {
+    const r = runPre(largeFilePath);
+    assert.equal(r.status, 0);
+    assert.equal(r.stdout, "", "PreToolUse must write nothing to stdout for a large Read");
+  });
+
   // ─── Slice 4.5 ───────────────────────────────────────────
   test("4.5: PostToolUse emits read-redirected with bytes_avoided == file size", () => {
     runPre(largeFilePath);

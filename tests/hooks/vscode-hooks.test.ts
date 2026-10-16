@@ -156,15 +156,14 @@ describe("VS Code Copilot hooks", () => {
   // ── PreToolUse ───────────────────────────────────────────
 
   describe("pretooluse.mjs", () => {
-    test("run_in_terminal: injects BASH_GUIDANCE additionalContext", () => {
+    test("run_in_terminal: no generic advisory for an unbounded command", () => {
       const result = runHook("pretooluse.mjs", {
         tool_name: "run_in_terminal",
         tool_input: { command: "npm test" },
       }, vscodeEnv());
 
       expect(result.exitCode).toBe(0);
-      const out = JSON.parse(result.stdout);
-      expect(out.hookSpecificOutput.additionalContext).toContain("ctx_batch_execute");
+      expect(result.stdout.trim()).toBe("");
     });
 
     test("run_in_terminal: curl is redirected to echo", () => {
@@ -179,7 +178,7 @@ describe("VS Code Copilot hooks", () => {
       expect(out.hookSpecificOutput.updatedInput.command).toContain("ctx_fetch_and_index");
     });
 
-    test("run_in_terminal: safe short command passes through with guidance", () => {
+    test("run_in_terminal: safe short command passes through silently", () => {
       // Use an unbounded command — `git status` is now in the #463
       // structurally-bounded allowlist and short-circuits the nudge.
       const result = runHook("pretooluse.mjs", {
@@ -188,8 +187,7 @@ describe("VS Code Copilot hooks", () => {
       }, vscodeEnv());
 
       expect(result.exitCode).toBe(0);
-      const out = JSON.parse(result.stdout);
-      expect(out.hookSpecificOutput.additionalContext).toContain("ctx_batch_execute");
+      expect(result.stdout.trim()).toBe("");
     });
   });
 

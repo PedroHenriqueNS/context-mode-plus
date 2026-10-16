@@ -99,7 +99,7 @@ describe("antigravity-cli hooks", () => {
     }
   });
 
-  test("PreToolUse denies mapped view_file payloads with ctx_execute_file guidance", () => {
+  test("PreToolUse leaves mapped view_file payloads alone (no generic Read advisory)", () => {
     const r = dispatch(
       "pretooluse.mjs",
       {
@@ -113,12 +113,10 @@ describe("antigravity-cli hooks", () => {
       home,
     );
     expect(r.status).toBe(0);
-    const parsed = JSON.parse(r.stdout.trim());
-    expect(parsed).toMatchObject({ decision: "deny" });
-    expect(parsed.reason).toContain("ctx_execute_file");
+    expect(r.stdout).toBe("");
   });
 
-  test("PreToolUse denies mapped grep_search payloads with ctx_execute guidance", () => {
+  test("PreToolUse leaves mapped grep_search payloads alone (no generic Grep advisory)", () => {
     const r = dispatch(
       "pretooluse.mjs",
       {
@@ -132,9 +130,7 @@ describe("antigravity-cli hooks", () => {
       home,
     );
     expect(r.status).toBe(0);
-    const parsed = JSON.parse(r.stdout.trim());
-    expect(parsed).toMatchObject({ decision: "deny" });
-    expect(parsed.reason).toContain("ctx_execute");
+    expect(r.stdout).toBe("");
   });
 
   test("PreToolUse leaves unmapped list_dir and search_web payloads alone", () => {

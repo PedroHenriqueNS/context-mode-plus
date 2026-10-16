@@ -176,16 +176,12 @@ describe("Bash structurally-bounded allowlist (#463)", () => {
     expect(routePreToolUse("Bash", { command: "ls" }, "/test", "claude-code", SID)).toBeNull();
     resetGuidanceThrottle(SID);
     expect(routePreToolUse("Bash", { command: "ls -la /etc" }, "/test", "claude-code", SID)).toBeNull();
-    resetGuidanceThrottle(SID);
-    // ls -R could flood — must still nudge
-    const lsR = routePreToolUse("Bash", { command: "ls -R /" }, "/test", "claude-code", SID);
-    expect(lsR?.action).toBe("context");
-    resetGuidanceThrottle(SID);
-    const lsLong = routePreToolUse("Bash", { command: "ls --recursive" }, "/test", "claude-code", SID);
-    expect(lsLong?.action).toBe("context");
+    // ls -R could flood — not bounded
+    expect(isStructurallyBounded("ls -R /")).toBe(false);
+    expect(isStructurallyBounded("ls --recursive")).toBe(false);
   });
 
-  it("unbounded commands still get the nudge", () => {
+  it("unbounded commands are not classified as bounded", () => {
     for (const command of [
       "find /",
       "cat /var/log/syslog",
@@ -194,9 +190,7 @@ describe("Bash structurally-bounded allowlist (#463)", () => {
       "git log",      // no -<N> bound
       "git diff",     // raw diff can be huge
     ]) {
-      resetGuidanceThrottle(SID);
-      const decision = routePreToolUse("Bash", { command }, "/test", "claude-code", SID);
-      expect(decision?.action, `expected nudge for ${command}`).toBe("context");
+      expect(isStructurallyBounded(command), `expected unbounded: ${command}`).toBe(false);
     }
   });
 
@@ -222,9 +216,7 @@ describe("Bash structurally-bounded allowlist (#463)", () => {
       "pwd & tail -F huge.log",
     ];
     for (const command of cases) {
-      resetGuidanceThrottle(SID);
-      const decision = routePreToolUse("Bash", { command }, "/test", "claude-code", SID);
-      expect(decision?.action, `expected nudge for ${command}`).toBe("context");
+      expect(isStructurallyBounded(command), `expected unbounded: ${command}`).toBe(false);
     }
   });
 
@@ -253,9 +245,7 @@ describe("Bash structurally-bounded allowlist (#463)", () => {
       "rm -vfr /tmp/x",
     ];
     for (const command of cases) {
-      resetGuidanceThrottle(SID);
-      const decision = routePreToolUse("Bash", { command }, "/test", "claude-code", SID);
-      expect(decision?.action, `expected nudge for ${command}`).toBe("context");
+      expect(isStructurallyBounded(command), `expected unbounded: ${command}`).toBe(false);
     }
   });
 
@@ -338,9 +328,7 @@ describe("Bash structurally-bounded allowlist: extended commands (#517)", () => 
       "id $(find /)",
     ];
     for (const command of cases) {
-      resetGuidanceThrottle(SID);
-      const decision = routePreToolUse("Bash", { command }, "/test", "claude-code", SID);
-      expect(decision?.action, `expected nudge for ${JSON.stringify(command)}`).toBe("context");
+      expect(isStructurallyBounded(command), `expected unbounded: ${JSON.stringify(command)}`).toBe(false);
     }
   });
 
@@ -362,9 +350,7 @@ describe("Bash structurally-bounded allowlist: extended commands (#517)", () => 
       "ln -vfs a b",
       "ln -sfvr /src /dst",
     ]) {
-      resetGuidanceThrottle(SID);
-      const decision = routePreToolUse("Bash", { command }, "/test", "claude-code", SID);
-      expect(decision?.action, `expected nudge for ${command}`).toBe("context");
+      expect(isStructurallyBounded(command), `expected unbounded: ${command}`).toBe(false);
     }
   });
 });
@@ -387,9 +373,7 @@ describe("Bash structurally-bounded allowlist: newline injection (#470)", () => 
       "whoami\ngrep -r foo /etc",
     ];
     for (const command of cases) {
-      resetGuidanceThrottle(SID);
-      const decision = routePreToolUse("Bash", { command }, "/test", "claude-code", SID);
-      expect(decision?.action, `expected nudge for ${JSON.stringify(command)}`).toBe("context");
+      expect(isStructurallyBounded(command), `expected unbounded: ${JSON.stringify(command)}`).toBe(false);
     }
   });
 
@@ -400,9 +384,7 @@ describe("Bash structurally-bounded allowlist: newline injection (#470)", () => 
       "pwd\r\ncat /var/log/syslog",
     ];
     for (const command of cases) {
-      resetGuidanceThrottle(SID);
-      const decision = routePreToolUse("Bash", { command }, "/test", "claude-code", SID);
-      expect(decision?.action, `expected nudge for ${JSON.stringify(command)}`).toBe("context");
+      expect(isStructurallyBounded(command), `expected unbounded: ${JSON.stringify(command)}`).toBe(false);
     }
   });
 
@@ -441,58 +423,6 @@ describe("Bash structurally-bounded allowlist: newline injection (#470)", () => 
 // Sane default: UNSET / 0 → current behavior (every unbounded command nudged),
 // so the context-saving guarantee for large outputs is NOT silently weakened.
 // Opt-in only — the operator chooses the threshold.
-// ─────────────────────────────────────────────────────────────────────────
-describe("Bash nudge size threshold (#817)", () => {
-  const SID = "threshold-817";
-  const ENV = "CONTEXT_MODE_BASH_NUDGE_MIN_COMMAND_BYTES";
-
-  beforeEach(() => {
-    resetGuidanceThrottle(SID);
-    delete process.env[ENV];
-  });
-
-  it("default (unset): short unbounded command STILL nudges — no behavior change", () => {
-    // Regression guard: without the env var, nothing changes. `ps` is short and
-    // unbounded — it must keep getting the nudge so the default stays safe.
-    const decision = routePreToolUse("Bash", { command: "ps" }, "/test", "claude-code", SID);
-    expect(decision?.action).toBe("context");
-  });
-
-  it("threshold set: short unbounded command below threshold SKIPS the nudge", () => {
-    process.env[ENV] = "64";
-    // "ps aux" is 6 bytes — below 64 → expected-lightweight → pass through.
-    const decision = routePreToolUse("Bash", { command: "ps aux" }, "/test", "claude-code", SID);
-    expect(decision, "short command below threshold should pass through untouched").toBeNull();
-  });
-
-  it("threshold set: long unbounded command at/above threshold STILL nudges", () => {
-    process.env[ENV] = "16";
-    // A long pipeline (> 16 bytes) can flood — must still intercept.
-    const long = "find / -type f -name '*.log' -exec cat {} +";
-    const decision = routePreToolUse("Bash", { command: long }, "/test", "claude-code", SID);
-    expect(decision?.action, "long command must still be nudged").toBe("context");
-  });
-
-  it("threshold does NOT relax curl/wget redirects (those stay deterministic)", () => {
-    process.env[ENV] = "4096"; // generous threshold — would otherwise mark this short cmd lightweight
-    // The threshold gates ONLY the generic Bash routing nudge. The curl/wget
-    // branch runs earlier and returns a `modify` redirect (or null only when
-    // MCP is unavailable) — it must NEVER be turned into a "pass-through-because-short".
-    // Assert the decision is NOT the generic "context" nudge: the threshold must
-    // not reclassify a curl flood as a lightweight bounded command.
-    const curl = routePreToolUse("Bash", { command: "curl https://x.io" }, "/test", "claude-code", SID);
-    expect(curl?.action ?? "modify-or-passthrough", "curl path must not become the generic nudge").not.toBe("context");
-  });
-
-  it("invalid / zero env value falls back to default (every unbounded cmd nudged)", () => {
-    for (const bad of ["0", "-5", "abc", ""]) {
-      resetGuidanceThrottle(SID);
-      process.env[ENV] = bad;
-      const decision = routePreToolUse("Bash", { command: "ps" }, "/test", "claude-code", SID);
-      expect(decision?.action, `env="${bad}" should behave as default`).toBe("context");
-    }
-  });
-});
 
 // ════════════════════════════════════════════════════════════════════════════
 // Issue #856 — session_continuity framing must NOT present a captured snapshot
