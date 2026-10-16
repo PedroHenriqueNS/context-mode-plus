@@ -1511,9 +1511,9 @@ function truncateCodeForEcho(code: string): string {
 }
 
 /**
- * Build the source-code preamble surfaced before tool stdout. Provenance
- * survives in indexed chunks (FTS5 sees the fenced block) so later
- * ctx_search hits remember what ran.
+ * Build the source-code preamble prepended to INDEXED tool output only (never
+ * returned to the model). Provenance survives in indexed chunks (FTS5 sees
+ * the fenced block) so later ctx_search hits remember what ran.
  */
 function buildExecuteEcho(language: string, code: string, path?: string): string {
   const header = path ? `path=${path}\n` : "";
@@ -1816,8 +1816,8 @@ __cm_main().catch(e=>{console.error(e);process.exitCode=1});${background ? '\nse
       const effTimeout = resolveExecTimeout(timeout);
       const result = await executor.execute({ language, code: instrumentedCode, timeout: effTimeout, background, cwd });
 
-      // Echo the executed source code before stdout so users can audit
-      // and tooling can block command patterns (Issues #717 + #736).
+      // plus: the code is NOT echoed back to the model; `echo` only prefixes
+      // INDEXED content so ctx_search hits keep their provenance (#717 + #736).
       // Built from the user-supplied `code`, NOT the instrumented variant.
       const echo = buildExecuteEcho(language, code);
 
@@ -1844,7 +1844,7 @@ __cm_main().catch(e=>{console.error(e);process.exitCode=1});${background ? '\nse
             content: [
               {
                 type: "text" as const,
-                text: `${echo}${partialOutput}\n\n_(process backgrounded after ${effTimeout}ms — still running)_`,
+                text: `${partialOutput}\n\n_(process backgrounded after ${effTimeout}ms — still running)_`,
               },
             ],
           });
@@ -1855,7 +1855,7 @@ __cm_main().catch(e=>{console.error(e);process.exitCode=1});${background ? '\nse
             content: [
               {
                 type: "text" as const,
-                text: `${echo}${partialOutput}\n\n_(timed out after ${effTimeout}ms — partial output shown above)_`,
+                text: `${partialOutput}\n\n_(timed out after ${effTimeout}ms — partial output shown above)_`,
               },
             ],
           });
@@ -1864,7 +1864,7 @@ __cm_main().catch(e=>{console.error(e);process.exitCode=1});${background ? '\nse
           content: [
             {
               type: "text" as const,
-              text: `${echo}Execution timed out after ${effTimeout}ms\n\nstderr:\n${result.stderr}`,
+              text: `Execution timed out after ${effTimeout}ms\n\nstderr:\n${result.stderr}`,
             },
           ],
           isError: true,
@@ -1879,7 +1879,7 @@ __cm_main().catch(e=>{console.error(e);process.exitCode=1});${background ? '\nse
           trackIndexed(Buffer.byteLength(output));
           return trackResponse("ctx_execute", {
             content: [
-              { type: "text" as const, text: `${echo}${intentSearch(output, intent, isError ? `execute:${language}:error` : `execute:${language}`)}` },
+              { type: "text" as const, text: intentSearch(output, intent, isError ? `execute:${language}:error` : `execute:${language}`, 5, echo) },
             ],
             isError,
           });
@@ -1889,14 +1889,14 @@ __cm_main().catch(e=>{console.error(e);process.exitCode=1});${background ? '\nse
           trackIndexed(Buffer.byteLength(output));
           return trackResponse("ctx_execute", {
             content: [
-              { type: "text" as const, text: `${echo}${intentSearch(output, "errors failures exceptions", isError ? `execute:${language}:error` : `execute:${language}`)}` },
+              { type: "text" as const, text: intentSearch(output, "errors failures exceptions", isError ? `execute:${language}:error` : `execute:${language}`, 5, echo) },
             ],
             isError,
           });
         }
         return trackResponse("ctx_execute", {
           content: [
-            { type: "text" as const, text: `${echo}${output}` },
+            { type: "text" as const, text: output },
           ],
           isError,
         });
@@ -1909,29 +1909,19 @@ __cm_main().catch(e=>{console.error(e);process.exitCode=1});${background ? '\nse
         trackIndexed(Buffer.byteLength(stdout));
         return trackResponse("ctx_execute", {
           content: [
-            { type: "text" as const, text: `${echo}${intentSearch(stdout, intent, `execute:${language}`)}` },
+            { type: "text" as const, text: intentSearch(stdout, intent, `execute:${language}`, 5, echo) },
           ],
         });
       }
 
       // Auto-index large stdout into FTS5 — return pointer, not raw content
       if (Buffer.byteLength(stdout) > LARGE_OUTPUT_THRESHOLD) {
-        const indexed = indexStdout(stdout, `execute:${language}`);
-        // Prepend echo to the first text content so provenance still surfaces
-        const echoed = {
-          ...indexed,
-          content: indexed.content.map((c, i) =>
-            i === 0 && c.type === "text"
-              ? { ...c, text: `${echo}${(c as { text: string }).text}` }
-              : c,
-          ),
-        };
-        return trackResponse("ctx_execute", echoed);
+        return trackResponse("ctx_execute", indexStdout(stdout, `execute:${language}`, echo));
       }
 
       return trackResponse("ctx_execute", {
         content: [
-          { type: "text" as const, text: `${echo}${stdout}` },
+          { type: "text" as const, text: stdout },
         ],
       });
     } catch (err: unknown) {
@@ -1953,10 +1943,11 @@ __cm_main().catch(e=>{console.error(e);process.exitCode=1});${background ? '\nse
 function indexStdout(
   stdout: string,
   source: string,
+  indexPrefix = "",
 ): { content: Array<{ type: "text"; text: string }> } {
   const store = getStore();
   trackIndexed(Buffer.byteLength(stdout));
-  const indexed = store.index({ content: stdout, source, attribution: currentAttribution() });
+  const indexed = store.index({ content: `${indexPrefix}${stdout}`, source, attribution: currentAttribution() });
   return {
     content: [
       {
@@ -1979,13 +1970,14 @@ function intentSearch(
   intent: string,
   source: string,
   maxResults: number = 5,
+  indexPrefix = "",
 ): string {
   const totalLines = stdout.split("\n").length;
   const totalBytes = Buffer.byteLength(stdout);
 
   // Index into the PERSISTENT store so user can ctx_search() later
   const persistent = getStore();
-  const indexed = persistent.indexPlainText(stdout, source, undefined, currentAttribution());
+  const indexed = persistent.indexPlainText(`${indexPrefix}${stdout}`, source, undefined, currentAttribution());
 
   // Search the persistent store directly (porter → trigram → fuzzy)
   let results = persistent.searchWithFallback(intent, maxResults, source);
@@ -2135,16 +2127,17 @@ EXAMPLE: ctx_execute_file(path: "data.csv", language: "javascript", code: "const
         timeout: effTimeout,
       });
 
-      // Echo path + executed source code before stdout for audit/debug
-      // (Issues #717 + #736).
+      // plus: only `path=` leads the response; the code echo goes into
+      // INDEXED content only (#717 + #736).
       const echo = buildExecuteEcho(language, code, path);
+      const head = `path=${path}\n\n`;
 
       if (result.timedOut) {
         return trackResponse("ctx_execute_file", {
           content: [
             {
               type: "text" as const,
-              text: `${echo}Timed out processing ${path} after ${effTimeout}ms`,
+              text: `${head}Timed out processing ${path} after ${effTimeout}ms`,
             },
           ],
           isError: true,
@@ -2159,7 +2152,7 @@ EXAMPLE: ctx_execute_file(path: "data.csv", language: "javascript", code: "const
           trackIndexed(Buffer.byteLength(output));
           return trackResponse("ctx_execute_file", {
             content: [
-              { type: "text" as const, text: `${echo}${intentSearch(output, intent, isError ? `file:${path}:error` : `file:${path}`)}` },
+              { type: "text" as const, text: `${head}${intentSearch(output, intent, isError ? `file:${path}:error` : `file:${path}`, 5, echo)}` },
             ],
             isError,
           });
@@ -2169,14 +2162,14 @@ EXAMPLE: ctx_execute_file(path: "data.csv", language: "javascript", code: "const
           trackIndexed(Buffer.byteLength(output));
           return trackResponse("ctx_execute_file", {
             content: [
-              { type: "text" as const, text: `${echo}${intentSearch(output, "errors failures exceptions", isError ? `file:${path}:error` : `file:${path}`)}` },
+              { type: "text" as const, text: `${head}${intentSearch(output, "errors failures exceptions", isError ? `file:${path}:error` : `file:${path}`, 5, echo)}` },
             ],
             isError,
           });
         }
         return trackResponse("ctx_execute_file", {
           content: [
-            { type: "text" as const, text: `${echo}${output}` },
+            { type: "text" as const, text: `${head}${output}` },
           ],
           isError,
         });
@@ -2188,28 +2181,22 @@ EXAMPLE: ctx_execute_file(path: "data.csv", language: "javascript", code: "const
         trackIndexed(Buffer.byteLength(stdout));
         return trackResponse("ctx_execute_file", {
           content: [
-            { type: "text" as const, text: `${echo}${intentSearch(stdout, intent, `file:${path}`)}` },
+            { type: "text" as const, text: `${head}${intentSearch(stdout, intent, `file:${path}`, 5, echo)}` },
           ],
         });
       }
 
       // Auto-index large stdout into FTS5 — return pointer, not raw content
       if (Buffer.byteLength(stdout) > LARGE_OUTPUT_THRESHOLD) {
-        const indexed = indexStdout(stdout, `file:${path}`);
-        const echoed = {
-          ...indexed,
-          content: indexed.content.map((c, i) =>
-            i === 0 && c.type === "text"
-              ? { ...c, text: `${echo}${(c as { text: string }).text}` }
-              : c,
-          ),
-        };
-        return trackResponse("ctx_execute_file", echoed);
+        const indexed = indexStdout(stdout, `file:${path}`, echo);
+        return trackResponse("ctx_execute_file", {
+          content: indexed.content.map((c, i) => (i === 0 ? { ...c, text: `${head}${c.text}` } : c)),
+        });
       }
 
       return trackResponse("ctx_execute_file", {
         content: [
-          { type: "text" as const, text: `${echo}${stdout}` },
+          { type: "text" as const, text: `${head}${stdout}` },
         ],
       });
     } catch (err: unknown) {

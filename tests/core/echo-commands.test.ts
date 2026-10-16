@@ -12,10 +12,9 @@
  *      "## Indexed Sections", listing each `- <label>: \`<command>\``
  *   3. Long commands (>500 chars) are truncated with `…` so heredoc payloads
  *      cannot dominate the response body
- *   4. ctx_execute prepends a fenced `${language}` block carrying the source
- *      code before stdout
- *   5. ctx_execute_file prepends a header naming the path + a fenced
- *      `${language}` block carrying the source code before stdout
+ *   4. ctx_execute does NOT echo the source code in the response (plus fork;
+ *      the echo only prefixes indexed content, see tests/plus/no-echo.test.ts)
+ *   5. ctx_execute_file keeps a leading `path=` line but no fenced code
  *
  * Tests 1-3 hit the pure runBatchCommands/formatCommandOutput surface (fast,
  * no spawn). Tests 4-5 hit the live MCP server over JSON-RPC (covers the
@@ -186,7 +185,7 @@ async function initServer(proc: ChildProcess): Promise<void> {
 // ════════════════════════════════════════════════════════════════════════════
 // Behaviour 4 — ctx_execute echoes the source code before stdout
 // ════════════════════════════════════════════════════════════════════════════
-describe("issue #717 — ctx_execute echoes the language + code it ran", () => {
+describe("issue #717 (plus) — ctx_execute does not echo the code it ran", () => {
   let projectDir: string;
   beforeAll(() => {
     projectDir = mkdtempSync(join(tmpdir(), "echo-exec-"));
@@ -195,7 +194,7 @@ describe("issue #717 — ctx_execute echoes the language + code it ran", () => {
     rmSync(projectDir, { recursive: true, force: true });
   });
 
-  test("success path: response carries fenced ```javascript block with the exact code, before stdout", async () => {
+  test("success path: response carries stdout and no fenced code block", async () => {
     const proc = spawnServer({ CLAUDE_PROJECT_DIR: projectDir });
     try {
       await initServer(proc);
@@ -208,13 +207,11 @@ describe("issue #717 — ctx_execute echoes the language + code it ran", () => {
       expect(resp?.error).toBeUndefined();
       expect(resp?.result?.isError ?? false).toBe(false);
       const text = resp?.result?.content?.[0]?.text ?? "";
-      // The fenced code block must appear and carry the exact source
-      expect(text).toContain("```javascript");
-      expect(text).toContain(code);
+      // The code is no longer echoed back to the model
+      expect(text).not.toContain("```javascript");
+      expect(text).not.toContain(code);
       // Stdout content still arrives
       expect(text).toContain(marker);
-      // Code echo MUST precede the stdout marker
-      expect(text.indexOf("```javascript")).toBeLessThan(text.indexOf(marker));
     } finally {
       try { proc.kill("SIGTERM"); } catch { /* best effort */ }
     }
@@ -277,7 +274,7 @@ describe("issue #736 — ctx_batch_execute summary includes a Commands inventory
 // ════════════════════════════════════════════════════════════════════════════
 // Behaviour 5 — ctx_execute_file echoes path + code before stdout
 // ════════════════════════════════════════════════════════════════════════════
-describe("issue #717 — ctx_execute_file echoes the path + code it ran", () => {
+describe("issue #717 (plus) — ctx_execute_file keeps path= but does not echo the code", () => {
   let projectDir: string;
   let dataFile: string;
   beforeAll(() => {
@@ -289,7 +286,7 @@ describe("issue #717 — ctx_execute_file echoes the path + code it ran", () => 
     rmSync(projectDir, { recursive: true, force: true });
   });
 
-  test("success path: response carries `path=<file>` + fenced code block before stdout", async () => {
+  test("success path: response carries `path=<file>` + stdout and no fenced code block", async () => {
     const proc = spawnServer({ CLAUDE_PROJECT_DIR: projectDir });
     try {
       await initServer(proc);
@@ -304,12 +301,11 @@ describe("issue #717 — ctx_execute_file echoes the path + code it ran", () => 
       const text = resp?.result?.content?.[0]?.text ?? "";
       // Path attribution present
       expect(text).toMatch(/path=.*sample\.txt/);
-      // Fenced code block carrying exact source
-      expect(text).toContain("```javascript");
-      expect(text).toContain(code);
-      // Stdout still arrives, AFTER the echo
+      expect(text.startsWith("path=")).toBe(true);
+      // No fenced code block, stdout still arrives
+      expect(text).not.toContain("```javascript");
+      expect(text).not.toContain(code);
       expect(text).toContain(marker);
-      expect(text.indexOf("```javascript")).toBeLessThan(text.indexOf(marker));
     } finally {
       try { proc.kill("SIGTERM"); } catch { /* best effort */ }
     }
