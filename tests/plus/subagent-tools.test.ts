@@ -54,6 +54,29 @@ describe("subagentHasCtxTools", () => {
     expect(has("meu-agente")).toBe(true);
   });
 
+  test("lenient tools: syntax", () => {
+    const cases: [string, boolean][] = [
+      ["tools:\n- Read\n- mcp__plugin_context-mode_context-mode__ctx_execute", true],
+      ["tools:\n- Read\n- Grep", false],
+      ["tools:", true],
+      ["tools: [*]", true],
+      ['tools: ["Read", "Grep"]', false],
+      ["tools: Read, Grep # no ctx", false],
+      ["tools: Read, ctx_search\r", true],
+    ];
+    for (const [fm, expected] of cases) {
+      pluginAgent(fm);
+      expect(has("feature-dev:code-explorer"), fm).toBe(expected);
+    }
+  });
+
+  test("CRLF file with ctx tool in comma string", () => {
+    const dir = join(configDir, "plugins", "cache", "mkt", "feature-dev", "1.0.0", "agents");
+    mkdirSync(dir, { recursive: true });
+    writeFileSync(join(dir, "code-explorer.md"), "---\r\nname: x\r\ntools: Read, ctx_search\r\n---\r\nbody\r\n");
+    expect(has("feature-dev:code-explorer")).toBe(true);
+  });
+
   test("most recently modified plugin version wins", () => {
     pluginAgent("tools: Read", "1.0.0");
     const old = new Date(Date.now() - 100000);

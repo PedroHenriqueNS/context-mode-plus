@@ -39,21 +39,23 @@ function findAgentFile(type, { configDir, projectDir }) {
   return null;
 }
 
-// Returns the `tools:` items from the leading frontmatter, or null when absent.
+// Returns the `tools:` items from the leading frontmatter, or null when absent or empty.
 function parseTools(text) {
   const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   if (!m) return null;
   const lines = m[1].split(/\r?\n/);
   const i = lines.findIndex((l) => /^tools:/.test(l));
   if (i < 0) return null;
-  const inline = lines[i].slice("tools:".length).trim();
+  const strip = (v) => v.replace(/\s+#.*$/, "").trim();
+  const inline = strip(lines[i].slice("tools:".length)).replace(/^\[|\]$/g, "");
   const items = inline ? inline.split(",") : [];
   for (let j = i + 1; !inline && j < lines.length; j++) {
-    const li = lines[j].match(/^\s+-\s*(.+)$/);
+    const li = lines[j].match(/^\s*-\s*(.+)$/);
     if (!li) break;
-    items.push(li[1]);
+    items.push(strip(li[1]));
   }
-  return items.map((s) => s.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
+  const out = items.map((t) => t.trim().replace(/^["']|["']$/g, "")).filter(Boolean);
+  return out.length ? out : null;
 }
 
 export function subagentHasCtxTools(subagentType, dirs) {
