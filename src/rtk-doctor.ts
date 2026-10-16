@@ -33,18 +33,41 @@ export function analyzeRtk(versionOut: string | null, pipelineOut: string | null
     return { summary: `${version} — edição oss (sem \`rtk pipeline show\`)`, warnings: [] };
   }
 
+  const rules = enabledRules(pipelineOut);
   const warnings: string[] = [];
-  if (/\[\[hook\.after_tool\.(mcp|any)\]\]/.test(pipelineOut)) {
+  if ((rules.get("hook.after_tool.mcp")?.length ?? 0) + (rules.get("hook.after_tool.any")?.length ?? 0) > 0) {
     warnings.push("Pipeline after_tool.mcp/any do RTK pode comprimir as saídas ctx_*.");
   }
-  if (/\[\[hook\.before_tool\.read\]\]/.test(pipelineOut)) {
+  if (rules.get("hook.before_tool.read")?.length) {
     warnings.push("Pipeline before_tool.read do RTK disputa o Read com o context-mode.");
   }
-  // Each TOML block starts at a header line; only an enabled `lockfiles` rule is harmless.
-  const readRules = pipelineOut.split(/^(?=\s*\[)/m).filter((b) => /^\s*\[\[hook\.after_tool\.read\]\]/.test(b));
-  const harmless = (b: string) => /^\s*name\s*=\s*["']lockfiles["']/m.test(b) && !/^\s*enabled\s*=\s*false\b/m.test(b);
-  if (readRules.some((b) => !harmless(b))) {
-    warnings.push("Pipeline after_tool.read do RTK altera a saída do Read (só a regra lockfiles habilitada é inofensiva).");
+  if ((rules.get("hook.after_tool.read") ?? []).some((name) => name !== "lockfiles")) {
+    warnings.push("Pipeline after_tool.read do RTK altera a saída do Read (só a regra lockfiles é inofensiva).");
   }
   return { summary: `${version} — pipelines lidas`, warnings };
+}
+
+/**
+ * Parses the resolved-pipeline listing of `rtk pipeline show` (rtk 1.0.1):
+ * a 2-space-indented position line (`  hook.after_tool.read`) followed by
+ * 4-space-indented rule lines (`    name  [origin] when … -> …`, suffixed
+ * `(disabled)` when off). Returns enabled rule names per position.
+ */
+function enabledRules(out: string): Map<string, string[]> {
+  const rules = new Map<string, string[]>();
+  let position: string | null = null;
+  for (const line of out.split(/\r?\n/)) {
+    const pos = line.match(/^ {2}(\S+)\s*$/);
+    if (pos) {
+      position = pos[1];
+      continue;
+    }
+    const rule = line.match(/^ {4}(\S+)\s/);
+    if (rule && position) {
+      if (!/\(disabled\)\s*$/.test(line)) rules.set(position, [...(rules.get(position) ?? []), rule[1]]);
+      continue;
+    }
+    if (!line.startsWith("  ")) position = null;
+  }
+  return rules;
 }
