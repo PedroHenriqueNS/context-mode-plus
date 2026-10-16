@@ -44,3 +44,6 @@ context-mode-guidance-*/
 tools/pricing/litellm-catalog.json
 /.cocoindex_code/
 /.kilo/
+
+# Local-only study notes (personal data, never published)
+docs/fork/private/

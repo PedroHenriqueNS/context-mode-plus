@@ -8,7 +8,7 @@
 
 **Tech Stack:** Node ≥ 22.5 (máquina: v24.18.0), TypeScript, esbuild (bundles commitados), vitest. Hooks em `.mjs` puro.
 
-**Spec:** `docs/fork/context-mode-fork-analise.md` (o estudo; seções 3, 5 e 7 são as normativas).
+**Spec:** `docs/fork/private/context-mode-fork-analise.md` (local, not published) (o estudo; seções 3, 5 e 7 são as normativas).
 
 ## Global Constraints
 
