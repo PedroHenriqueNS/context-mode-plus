@@ -563,6 +563,18 @@ describe("routePreToolUse", () => {
       expect(prompt).not.toContain("<ctx_commands>");
     });
 
+    it("returns null when the subagent cannot call ctx tools (subagentHasCtx: false)", () => {
+      const result = routePreToolUse(
+        "Agent",
+        { prompt: "x", subagent_type: "claude-code-guide" },
+        undefined,
+        undefined,
+        undefined,
+        { subagentHasCtx: false },
+      );
+      expect(result).toBeNull();
+    });
+
     it("ROUTING_BLOCK constant includes ctx_commands for main session", () => {
       expect(ROUTING_BLOCK).toContain("<ctx_commands>");
       expect(ROUTING_BLOCK).toContain("ctx stats");

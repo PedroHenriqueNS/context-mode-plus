@@ -666,6 +666,10 @@ function getPlatformSettingsPath(platform) {
  * @param {boolean} [options.mcpToolsAvailable=true] - False when the current
  *   caller context cannot invoke ctx_* MCP tools even though an MCP server is
  *   live on the machine (Claude Code fixed-tool subagents — #794).
+ * @param {boolean} [options.subagentHasCtx=true] - context-mode-plus: false when
+ *   the Agent's subagent type cannot call ctx_* tools; no routing is injected.
+ * @param {string|null} [options.subagentRules] - context-mode-plus: the user's
+ *   rules, injected into subagent prompts instead of the built-in block.
  */
 export function routePreToolUse(toolName, toolInput, projectDir, platform, sessionId, options = {}) {
   const mcpToolsAvailable = options.mcpToolsAvailable !== false;
@@ -892,6 +896,7 @@ export function routePreToolUse(toolName, toolInput, projectDir, platform, sessi
   // ─── Agent: inject context-mode routing into subagent prompts ───
   // Subagents cannot use ctx commands (stats/doctor/upgrade/purge) — omit that section (#233)
   if (canonical === "Agent") {
+    if (options.subagentHasCtx === false) return null;
     const subagentType = toolInput.subagent_type ?? "";
     // Detect the correct field name for the prompt/request/objective/question/query
     const fieldName = ["prompt", "request", "objective", "question", "query", "task"].find(f => f in toolInput) ?? "prompt";
@@ -907,10 +912,11 @@ export function routePreToolUse(toolName, toolInput, projectDir, platform, sessi
       toolSearchBootstrap: isClaudeCode,
     });
 
+    const injected = options.subagentRules ?? subagentBlock;
     const updatedInput =
       subagentType === "Bash"
-        ? { ...toolInput, [fieldName]: prompt + subagentBlock, subagent_type: "general-purpose" }
-        : { ...toolInput, [fieldName]: prompt + subagentBlock };
+        ? { ...toolInput, [fieldName]: prompt + injected, subagent_type: "general-purpose" }
+        : { ...toolInput, [fieldName]: prompt + injected };
 
     return { action: "modify", updatedInput };
   }

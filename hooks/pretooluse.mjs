@@ -27,6 +27,8 @@ await runHook(async () => {
   const { tmpdir } = await import("node:os");
   const { readStdin } = await import("./core/stdin.mjs");
   const { routePreToolUse, initSecurity } = await import("./core/routing.mjs");
+  const { subagentHasCtxTools } = await import("./core/subagent-tools.mjs");
+  const { loadUserRules } = await import("./core/user-rules.mjs");
   const { formatDecision } = await import("./core/formatters.mjs");
   const { parseStdin, getInputProjectDir, getSessionId, resolveConfigDir } = await import("./session-helpers.mjs");
 
@@ -167,9 +169,14 @@ await runHook(async () => {
   const isSubagentContext = input.agent_id != null || input.agent_type != null;
 
   // ─── Route and format response ───
-  const decision = routePreToolUse(tool, toolInput, projectDir, "claude-code", getSessionId(input), {
-    mcpToolsAvailable: !isSubagentContext,
-  });
+  const routeOptions = { mcpToolsAvailable: !isSubagentContext };
+  if (tool === "Agent") {
+    // context-mode-plus: only brief subagents that can call ctx tools, with the user's rules if present.
+    const configDir = resolveConfigDir();
+    routeOptions.subagentHasCtx = subagentHasCtxTools(toolInput.subagent_type ?? "", { configDir, projectDir });
+    routeOptions.subagentRules = loadUserRules(configDir);
+  }
+  const decision = routePreToolUse(tool, toolInput, projectDir, "claude-code", getSessionId(input), routeOptions);
   const response = formatDecision("claude-code", decision);
 
   // ─── Write latency marker for cross-hook timing (Category 27) ───

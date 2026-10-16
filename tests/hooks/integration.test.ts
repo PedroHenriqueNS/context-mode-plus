@@ -631,7 +631,10 @@ describe("Plugin Tool Name Format in ROUTING_BLOCK", () => {
   const SHORT_PREFIX = "mcp__context-mode__";
 
   test("Agent routing block uses plugin-format tool names", () => {
-    const result = runHook({ tool_name: "Agent", tool_input: { prompt: "Do something." } });
+    // Empty config dir: a developer's own context-mode-usage.md would replace the block.
+    const cfg = mkdtempSync(join(tmpdir(), "ctx-agent-cfg-"));
+    const result = runHook({ tool_name: "Agent", tool_input: { prompt: "Do something." } }, { CLAUDE_CONFIG_DIR: cfg });
+    rmSyncRobust(cfg);
     assert.equal(result.exitCode, 0);
     const parsed = JSON.parse(result.stdout);
     const prompt = parsed.hookSpecificOutput.updatedInput.prompt;
