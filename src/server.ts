@@ -30,6 +30,7 @@ import {
   hasBunRuntime,
 } from "./runtime.js";
 import { classifyNonZeroExit } from "./exit-classify.js";
+import { probeRtk } from "./rtk-doctor.js";
 import { startLifecycleGuard, noteMcpActivity, noteRequestStart, noteRequestEnd, attachMcpActivityTap } from "./lifecycle.js";
 import { charSafePrefix } from "./truncate.js";
 import {
@@ -4262,6 +4263,11 @@ server.registerTool(
 
     // Version
     lines.push(`[OK] Version: v${VERSION}`);
+
+    // context-mode-plus: RTK is informational — never a FAIL.
+    const rtk = probeRtk();
+    lines.push(`[OK] RTK: ${rtk.summary}`);
+    for (const w of rtk.warnings) lines.push(`[WARN] RTK: ${w}`);
 
     return trackResponse("ctx_doctor", {
       content: [{ type: "text" as const, text: lines.join("\n") }],

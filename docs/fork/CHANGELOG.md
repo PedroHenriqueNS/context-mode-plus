@@ -1,5 +1,10 @@
 # Changelog (context-mode-plus)
 
+## 1.0.169-plus.2 — 2026-10-16
+
+- O `doctor` lê a listagem real do `rtk pipeline show` do RTK 1.0.1 (antes esperava TOML).
+- A ferramenta MCP `ctx_doctor` também mostra a seção RTK (antes só o doctor da CLI).
+
 ## 1.0.169-plus.1 — 2026-10-16
 
 - Identidade do fork (`context-mode-plus`, marketplace próprio), migração do upgrade e autocorreção do registro de plugins.
