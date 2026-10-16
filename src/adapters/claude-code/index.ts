@@ -29,6 +29,7 @@ import { ClaudeCodeBaseAdapter, type ClaudeCodeWireInput } from "../claude-code-
 import { resolveContextModeDataRoot } from "../base.js";
 import { resolveClaudeConfigDir } from "../../util/claude-config.js";
 import { checkPluginCacheIntegritySync } from "../../util/plugin-cache-integrity.js";
+import { compareVersions } from "../../util/version-compare.js";
 
 import {
   buildHookRuntimeCommand,
@@ -443,15 +444,7 @@ export class ClaudeCodeAdapter extends ClaudeCodeBaseAdapter implements HookAdap
         const entries = readdirSync(cacheDir);
         const versions = entries
           .filter((e) => /^\d+\.\d+\.\d+/.test(e))
-          .sort((a, b) => {
-            const pa = a.split(".").map(Number);
-            const pb = b.split(".").map(Number);
-            for (let i = 0; i < 3; i++) {
-              if ((pa[i] ?? 0) !== (pb[i] ?? 0))
-                return (pa[i] ?? 0) - (pb[i] ?? 0);
-            }
-            return 0;
-          });
+          .sort(compareVersions);
         if (versions.length > 0) return versions[versions.length - 1];
       } catch {
         /* continue */

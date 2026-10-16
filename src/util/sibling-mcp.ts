@@ -66,7 +66,7 @@ export interface KillReport {
 }
 
 // Match BOTH `~/.claude/plugins/cache/context-mode-plus/context-mode/<v>/start.mjs`
-// AND `~/.claude/plugins/marketplaces/context-mode/start.mjs` shapes.
+// AND `~/.claude/plugins/marketplaces/context-mode-plus/start.mjs` shapes.
 // Both can be alive concurrently — VERDICT R1 dump confirmed all four
 // PIDs simultaneously across three different versions on a real Mac.
 const POSIX_PGREP_PATTERN =

@@ -9,6 +9,21 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const originalCwd = process.cwd();
 process.chdir(__dirname);
 
+// Compare "X.Y.Z" / "X.Y.Z-plus.N" (fork scheme; plain X.Y.Z sorts as N=0).
+// Mirrors src/util/version-compare.ts; kept inline because start.mjs has no build step.
+function compareVersions(a, b) {
+  const parse = (v) => {
+    const m = /^(\d+)\.(\d+)\.(\d+)(?:-plus\.(\d+))?/.exec(String(v));
+    return m ? [+m[1], +m[2], +m[3], +(m[4] || 0)] : [0, 0, 0, 0];
+  };
+  const pa = parse(a);
+  const pb = parse(b);
+  for (let i = 0; i < 4; i++) {
+    if (pa[i] !== pb[i]) return pa[i] - pb[i];
+  }
+  return 0;
+}
+
 // Resolve the Claude Code config dir, honoring $CLAUDE_CONFIG_DIR (incl. leading ~).
 // Mirrors hooks/session-helpers.mjs::resolveConfigDir and hooks/run-hook.mjs (#453).
 // Inlined here because start.mjs runs before any other module loads — we cannot
@@ -152,15 +167,7 @@ if (cacheMatch) {
       /^\d+\.\d+\.\d+/.test(d),
     );
     if (dirs.length > 1) {
-      dirs.sort((a, b) => {
-        const pa = a.split(".").map(Number);
-        const pb = b.split(".").map(Number);
-        for (let i = 0; i < 3; i++) {
-          if ((pa[i] ?? 0) !== (pb[i] ?? 0))
-            return (pa[i] ?? 0) - (pb[i] ?? 0);
-        }
-        return 0;
-      });
+      dirs.sort(compareVersions);
       const newest = dirs[dirs.length - 1];
       if (newest && newest !== myVersion) {
         // Issue #727: normalize hooks.json + plugin.json in the newest version
@@ -362,7 +369,7 @@ try{
       try{if(lstatSync(p).isSymbolicLink())unlinkSync(p)}catch{}
       const dirs=readdirSync(parent).filter(d=>/^\\d+\\.\\d+/.test(d)&&statSync(join(parent,d)).isDirectory());
       if(!dirs.length)continue;
-      dirs.sort((a,b)=>{const pa=a.split(".").map(Number),pb=b.split(".").map(Number);for(let i=0;i<3;i++){if((pa[i]||0)!==(pb[i]||0))return(pa[i]||0)-(pb[i]||0)}return 0});
+      dirs.sort((a,b)=>{const p=v=>{const m=/^(\\d+)\\.(\\d+)\\.(\\d+)(?:-plus\\.(\\d+))?/.exec(v);return m?[+m[1],+m[2],+m[3],+(m[4]||0)]:[0,0,0,0]},pa=p(a),pb=p(b);for(let i=0;i<4;i++){if(pa[i]!==pb[i])return pa[i]-pb[i]}return 0});
       try{symlinkSync(join(parent,dirs[dirs.length-1]),p,process.platform==="win32"?"junction":undefined)}catch{}
     }
   }
