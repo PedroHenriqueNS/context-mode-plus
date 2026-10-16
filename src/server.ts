@@ -1879,7 +1879,7 @@ __cm_main().catch(e=>{console.error(e);process.exitCode=1});${background ? '\nse
           trackIndexed(Buffer.byteLength(output));
           return trackResponse("ctx_execute", {
             content: [
-              { type: "text" as const, text: intentSearch(output, intent, isError ? `execute:${language}:error` : `execute:${language}`, 5, echo) },
+              { type: "text" as const, text: intentSearch(output, intent, isError ? `execute:${language}:error` : `execute:${language}`, echo) },
             ],
             isError,
           });
@@ -1889,7 +1889,7 @@ __cm_main().catch(e=>{console.error(e);process.exitCode=1});${background ? '\nse
           trackIndexed(Buffer.byteLength(output));
           return trackResponse("ctx_execute", {
             content: [
-              { type: "text" as const, text: intentSearch(output, "errors failures exceptions", isError ? `execute:${language}:error` : `execute:${language}`, 5, echo) },
+              { type: "text" as const, text: intentSearch(output, "errors failures exceptions", isError ? `execute:${language}:error` : `execute:${language}`, echo) },
             ],
             isError,
           });
@@ -1909,7 +1909,7 @@ __cm_main().catch(e=>{console.error(e);process.exitCode=1});${background ? '\nse
         trackIndexed(Buffer.byteLength(stdout));
         return trackResponse("ctx_execute", {
           content: [
-            { type: "text" as const, text: intentSearch(stdout, intent, `execute:${language}`, 5, echo) },
+            { type: "text" as const, text: intentSearch(stdout, intent, `execute:${language}`, echo) },
           ],
         });
       }
@@ -1940,14 +1940,21 @@ __cm_main().catch(e=>{console.error(e);process.exitCode=1});${background ? '\nse
 // Helper: index stdout into FTS5 knowledge base
 // ─────────────────────────────────────────────────────────
 
+// plus: the executed code is indexed under its own `${source}:code` label so
+// ctx_search keeps provenance, but never shows up in model-facing listings.
+function indexEcho(source: string, echo: string): void {
+  if (echo) getStore().indexPlainText(echo, `${source}:code`, undefined, currentAttribution());
+}
+
 function indexStdout(
   stdout: string,
   source: string,
-  indexPrefix = "",
+  echo = "",
 ): { content: Array<{ type: "text"; text: string }> } {
   const store = getStore();
   trackIndexed(Buffer.byteLength(stdout));
-  const indexed = store.index({ content: `${indexPrefix}${stdout}`, source, attribution: currentAttribution() });
+  indexEcho(source, echo);
+  const indexed = store.index({ content: stdout, source, attribution: currentAttribution() });
   return {
     content: [
       {
@@ -1969,18 +1976,21 @@ function intentSearch(
   stdout: string,
   intent: string,
   source: string,
+  echo = "",
   maxResults: number = 5,
-  indexPrefix = "",
 ): string {
   const totalLines = stdout.split("\n").length;
   const totalBytes = Buffer.byteLength(stdout);
 
   // Index into the PERSISTENT store so user can ctx_search() later
   const persistent = getStore();
-  const indexed = persistent.indexPlainText(`${indexPrefix}${stdout}`, source, undefined, currentAttribution());
+  indexEcho(source, echo);
+  const indexed = persistent.indexPlainText(stdout, source, undefined, currentAttribution());
 
-  // Search the persistent store directly (porter → trigram → fuzzy)
-  let results = persistent.searchWithFallback(intent, maxResults, source);
+  // Search the persistent store directly (porter → trigram → fuzzy).
+  // "exact" keeps the separately indexed code echo (`${source}:code`) out of
+  // the listing returned to the model.
+  let results = persistent.searchWithFallback(intent, maxResults, source, undefined, "exact");
 
   // Extract distinctive terms as vocabulary hints for the LLM
   const distinctiveTerms = persistent.getDistinctiveTerms(indexed.sourceId);
@@ -2152,7 +2162,7 @@ EXAMPLE: ctx_execute_file(path: "data.csv", language: "javascript", code: "const
           trackIndexed(Buffer.byteLength(output));
           return trackResponse("ctx_execute_file", {
             content: [
-              { type: "text" as const, text: `${head}${intentSearch(output, intent, isError ? `file:${path}:error` : `file:${path}`, 5, echo)}` },
+              { type: "text" as const, text: `${head}${intentSearch(output, intent, isError ? `file:${path}:error` : `file:${path}`, echo)}` },
             ],
             isError,
           });
@@ -2162,7 +2172,7 @@ EXAMPLE: ctx_execute_file(path: "data.csv", language: "javascript", code: "const
           trackIndexed(Buffer.byteLength(output));
           return trackResponse("ctx_execute_file", {
             content: [
-              { type: "text" as const, text: `${head}${intentSearch(output, "errors failures exceptions", isError ? `file:${path}:error` : `file:${path}`, 5, echo)}` },
+              { type: "text" as const, text: `${head}${intentSearch(output, "errors failures exceptions", isError ? `file:${path}:error` : `file:${path}`, echo)}` },
             ],
             isError,
           });
@@ -2181,7 +2191,7 @@ EXAMPLE: ctx_execute_file(path: "data.csv", language: "javascript", code: "const
         trackIndexed(Buffer.byteLength(stdout));
         return trackResponse("ctx_execute_file", {
           content: [
-            { type: "text" as const, text: `${head}${intentSearch(stdout, intent, `file:${path}`, 5, echo)}` },
+            { type: "text" as const, text: `${head}${intentSearch(stdout, intent, `file:${path}`, echo)}` },
           ],
         });
       }

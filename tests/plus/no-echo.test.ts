@@ -87,6 +87,30 @@ describe("ctx_execute / ctx_execute_file do not echo code to the model", () => {
     expect(s.text).toContain("ECHOPROBEalpha");
   }, 30_000);
 
+  test("ctx_execute intent matching the code: no fence or code-only token in response, index still finds it", async () => {
+    const code = "const ECHOPROBEgamma = 'zzcodeonlyepsilon'; for (let i = 0; i < 400; i++) console.log('filler line ' + i + ' lorem ipsum dolor sit amet');";
+    for (const intent of ["ECHOPROBEgamma", "javascript const filler", "filler ECHOPROBEgamma"]) {
+      const { text } = await call("ctx_execute", { language: "javascript", code, intent });
+      expect(text, intent).not.toContain("```");
+      // The intent string itself may be quoted back; other code-only text must not be.
+      expect(text, intent).not.toContain("zzcodeonlyepsilon");
+    }
+    const s = await call("ctx_search", { queries: ["ECHOPROBEgamma"] });
+    expect(s.text).toContain("ECHOPROBEgamma");
+  }, 30_000);
+
+  test("ctx_execute_file intent matching the code: no fence or code-only token in response", async () => {
+    const path = join(dir, "data.txt");
+    const code = "const ECHOPROBEdelta = 'zzcodeonlyzeta'; for (let i = 0; i < 400; i++) console.log('filler row ' + i + ' lorem ipsum dolor sit amet');";
+    for (const intent of ["ECHOPROBEdelta", "javascript const filler"]) {
+      const { text } = await call("ctx_execute_file", { path, language: "javascript", code, intent });
+      expect(text, intent).not.toContain("```");
+      expect(text, intent).not.toContain("zzcodeonlyzeta");
+    }
+    const s = await call("ctx_search", { queries: ["ECHOPROBEdelta"] });
+    expect(s.text).toContain("ECHOPROBEdelta");
+  }, 30_000);
+
   test("ctx_execute_file: leading path= line, no fenced code", async () => {
     const path = join(dir, "data.txt");
     const { text } = await call("ctx_execute_file", { path, language: "javascript", code: "console.log(FILE_CONTENT.trim())" });
