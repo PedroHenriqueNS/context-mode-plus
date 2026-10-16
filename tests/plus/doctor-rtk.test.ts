@@ -74,10 +74,16 @@ describe("ctx_doctor reports RTK", () => {
     proc.stdin!.write(JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }) + "\n");
   }, 60_000);
 
-  afterAll(() => {
-    try { proc.kill("SIGTERM"); } catch { /* best effort */ }
-    rmSync(dir, { recursive: true, force: true });
-  });
+  afterAll(async () => {
+    // Wait for the server to exit: it may still be writing into `dir` (ENOTEMPTY race).
+    await new Promise<void>((done) => {
+      if (proc.exitCode !== null) return done();
+      const t = setTimeout(done, 5_000);
+      proc.once("exit", () => { clearTimeout(t); done(); });
+      try { proc.kill("SIGTERM"); } catch { clearTimeout(t); done(); }
+    });
+    rmSync(dir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
+  }, 15_000);
 
   test("summary line plus one warning per finding", async () => {
     const r = await rpc(proc, 2, "tools/call", { name: "ctx_doctor", arguments: {} });

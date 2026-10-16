@@ -47,9 +47,9 @@ describe("context-mode-plus fork identity", () => {
     expect(read("hooks/cache-heal-utils.mjs")).not.toMatch(/context-mode-cache-heal/);
   });
 
-  it("version is 1.0.169-plus.1 and synced", () => {
-    const v = "1.0.169-plus.1";
-    expect(json("package.json").version).toBe(v);
+  it("version is a -plus.N release and synced", () => {
+    const v = json("package.json").version;
+    expect(v).toMatch(/^\d+\.\d+\.\d+-plus\.\d+$/);
     expect(json(".claude-plugin/plugin.json").version).toBe(v);
     expect(json(".claude-plugin/marketplace.json").metadata.version).toBe(v);
     expect(json(".claude-plugin/marketplace.json").plugins[0].version).toBe(v);
