@@ -1,5 +1,9 @@
 # Changelog (context-mode-plus)
 
+## 1.0.169-plus.3 — 2026-10-16
+
+- `ctx_search` com `sort: "timeline"` devolve as entradas mais recentes (em ordem cronológica); antes devolvia as mais antigas.
+
 ## 1.0.169-plus.2 — 2026-10-16
 
 - O `doctor` lê a listagem real do `rtk pipeline show` do RTK 1.0.1 (antes esperava TOML).

@@ -170,6 +170,8 @@ export function searchAllSources(opts: SearchAllSourcesOpts): UnifiedSearchResul
   // ── Sort ──
   if (sort === "timeline") {
     results.sort((a, b) => (a.timestamp || "").localeCompare(b.timestamp || ""));
+    // context-mode-plus: keep the most recent `limit` entries, still oldest→newest.
+    return limit > 0 ? results.slice(-limit) : [];
   }
 
   return results.slice(0, limit);

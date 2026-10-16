@@ -1089,7 +1089,7 @@ export class SessionDB extends SQLiteBase {
        WHERE (project_dir = ? OR project_dir = '')
          AND (data LIKE '%' || ? || '%' ESCAPE '\\' OR category LIKE '%' || ? || '%' ESCAPE '\\')
          AND (? IS NULL OR category = ?)
-       ORDER BY id ASC
+       ORDER BY id DESC
        LIMIT ?`);
 
     // ── Cleanup ──
@@ -1400,7 +1400,8 @@ export class SessionDB extends SQLiteBase {
     try {
       const escapedQuery = query.replace(/[%_]/g, (char) => "\\" + char);
       const sourceParam = source ?? null;
-      return this.stmt(S.searchEvents).all(
+      // context-mode-plus: the query takes the newest `limit` rows; return them oldest first.
+      return (this.stmt(S.searchEvents).all(
         projectDir,
         escapedQuery,
         escapedQuery,
@@ -1414,7 +1415,7 @@ export class SessionDB extends SQLiteBase {
         type: string;
         data: string;
         created_at: string;
-      }>;
+      }>).reverse();
     } catch {
       return [];
     }
