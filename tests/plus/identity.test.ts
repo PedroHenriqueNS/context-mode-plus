@@ -80,3 +80,17 @@ describe("context-mode-plus fork identity", () => {
     expect(needsHookNormalization(old, "/c/context-mode-plus/context-mode/1.0.169-plus.1")).toBe(false);
   });
 });
+
+describe("latest-version lookups use the fork, not upstream npm", () => {
+  const FORK_PKG = "https://raw.githubusercontent.com/PedroHenriqueNS/context-mode-plus/main/package.json";
+  it("cli.ts and server.ts fetchLatestVersion read the fork package.json", () => {
+    for (const f of ["src/cli.ts", "src/server.ts"]) {
+      const src = read(f);
+      expect(src).toContain(FORK_PKG);
+      expect(src).not.toContain("registry.npmjs.org/context-mode");
+    }
+  });
+  it("ctx-debug.sh no longer compares against the upstream npm package", () => {
+    expect(read("scripts/ctx-debug.sh")).not.toContain("npm view context-mode");
+  });
+});

@@ -2896,9 +2896,9 @@ describe("Version outdated warning in trackResponse", () => {
     "utf-8",
   );
 
-  test("fetchLatestVersion function exists and uses npm registry", () => {
+  test("fetchLatestVersion function exists and reads the fork package.json on GitHub", () => {
     expect(serverSrc).toContain("function fetchLatestVersion");
-    expect(serverSrc).toContain("registry.npmjs.org/context-mode");
+    expect(serverSrc).toContain("raw.githubusercontent.com/PedroHenriqueNS/context-mode-plus/main/package.json");
   });
 
   test("version check fires in main() after server.connect", () => {

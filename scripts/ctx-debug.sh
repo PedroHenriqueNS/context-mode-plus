@@ -327,14 +327,8 @@ check "hooks/sessionstart.mjs exists" "$([ -f "$PLUGIN_ROOT/hooks/sessionstart.m
 check "server.bundle.mjs exists" "$([ -f "$PLUGIN_ROOT/server.bundle.mjs" ] && echo true || echo false)"
 check "cli.bundle.mjs exists" "$([ -f "$PLUGIN_ROOT/cli.bundle.mjs" ] && echo true || echo false)"
 
-# npm latest
-NPM_LATEST="$(safe_cmd_quiet npm view context-mode version 2>/dev/null)"
-if [ -n "$NPM_LATEST" ]; then
-  kv "npm latest" "$NPM_LATEST"
-  if [ -n "$LOCAL_VER" ] && [ "$LOCAL_VER" != "$NPM_LATEST" ]; then
-    warn "Update available: $LOCAL_VER → $NPM_LATEST"
-  fi
-fi
+# npm latest: intentionally not checked. context-mode-plus is not published to npm,
+# and the npm package `context-mode` is upstream's, so comparing against it is wrong.
 
 # ─── 4. better-sqlite3 Native Module ─────────────────────────────────────────
 

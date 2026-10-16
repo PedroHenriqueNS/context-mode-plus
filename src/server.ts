@@ -781,7 +781,7 @@ const VERSION_SILENT_MS = 60 * 60 * 1000; // 1 hour
 async function fetchLatestVersion(): Promise<string> {
   return new Promise((res) => {
     const req = httpsRequest(
-      "https://registry.npmjs.org/context-mode/latest",
+      "https://raw.githubusercontent.com/PedroHenriqueNS/context-mode-plus/main/package.json",
       { headers: { Connection: "close" } },
       (resp) => {
         let raw = "";

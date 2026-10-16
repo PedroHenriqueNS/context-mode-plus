@@ -387,7 +387,7 @@ async function fetchLatestVersion(): Promise<string> {
   // racing with process.exit() teardown on Node.js v24+.
   return new Promise((resolve) => {
     const req = httpsRequest(
-      "https://registry.npmjs.org/context-mode/latest",
+      "https://raw.githubusercontent.com/PedroHenriqueNS/context-mode-plus/main/package.json",
       { headers: { Connection: "close" } },
       (res) => {
         let raw = "";
@@ -1154,7 +1154,7 @@ async function doctor(): Promise<number> {
   if (latestVersion === "unknown") {
     p.log.warn(
       color.yellow("npm (MCP): WARN") +
-        ` — local v${localVersion}, could not reach npm registry`,
+        ` — local v${localVersion}, could not reach the fork repo on GitHub`,
     );
   } else if (localVersion === latestVersion) {
     p.log.success(
