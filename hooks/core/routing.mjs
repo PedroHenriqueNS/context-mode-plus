@@ -838,7 +838,8 @@ export function routePreToolUse(toolName, toolInput, projectDir, platform, sessi
       toolSearchBootstrap: isClaudeCode,
     });
 
-    const injected = options.subagentRules ?? subagentBlock;
+    // subagentBlock starts with "\n"; user rules get the same blank-line separation.
+    const injected = options.subagentRules != null ? "\n\n" + options.subagentRules : subagentBlock;
     const updatedInput =
       subagentType === "Bash"
         ? { ...toolInput, [fieldName]: prompt + injected, subagent_type: "general-purpose" }

@@ -1392,7 +1392,7 @@ export function formatBatchQueryResults(
     sections.push("");
     if (results.length > 0) {
       for (const result of results) {
-        const key = `${result.source}\u0000${result.title}`;
+        const key = `${result.source}\u0000${result.title}\u0000${result.content}`;
         const firstQuery = seen.get(key);
         if (firstQuery !== undefined && firstQuery !== query) {
           const pointer = `(mesma seção de "## ${firstQuery}")`;

@@ -105,5 +105,6 @@ describe("routePreToolUse Agent branch", () => {
     const prompt = (r.updatedInput as Record<string, string>).prompt;
     expect(prompt).toContain("<context_mode_rules>R</context_mode_rules>");
     expect(prompt).not.toContain("<context_window_protection>");
+    expect(prompt).toBe("x\n\n<context_mode_rules>R</context_mode_rules>");
   });
 });
