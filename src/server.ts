@@ -864,7 +864,7 @@ function healCacheMidSession(): void {
     // Plugin root: build/ for tsc, plugin root for bundle
     const pluginRoot = getPackageRoot();
     for (const [key, entries] of Object.entries((ip.plugins ?? {}) as Record<string, Array<{ installPath?: string }>>)) {
-      if (key !== "context-mode@context-mode") continue;
+      if (key !== "context-mode@context-mode-plus") continue;
       for (const entry of entries) {
         const rp = entry.installPath;
         if (!rp || existsSync(rp)) continue;
@@ -4343,7 +4343,7 @@ server.registerTool(
     } else {
       // Inline fallback: neither CLI file exists (e.g. marketplace installs).
       // Generate a self-contained node -e script that performs the upgrade.
-      const repoUrl = "https://github.com/mksglu/context-mode.git";
+      const repoUrl = "https://github.com/PedroHenriqueNS/context-mode-plus.git";
       // Write inline script to a temp .mjs file — avoids quote-escaping issues
       // across cmd.exe, PowerShell, and bash (node -e '...' breaks on Windows).
       const scriptLines = [

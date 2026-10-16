@@ -248,7 +248,7 @@ export function healPluginJsonMcpServers({ pluginRoot, pluginCacheRoot, pluginKe
     return { healed: [], skipped: "no-mcp-servers" };
   }
 
-  // Derive our server name from pluginKey ("context-mode@context-mode" → "context-mode").
+  // Derive our server name from pluginKey ("context-mode@context-mode-plus" → "context-mode").
   const ourServerName = pluginKey.split("@")[0];
   const ours = servers[ourServerName];
   if (!ours || typeof ours !== "object" || !Array.isArray(ours.args)) {
@@ -358,7 +358,7 @@ export function healMcpJsonArgs({ pluginRoot, pluginCacheRoot, pluginKey }) {
     return { healed: [], skipped: "no-mcp-servers" };
   }
 
-  // Derive our server name from pluginKey ("context-mode@context-mode" → "context-mode").
+  // Derive our server name from pluginKey ("context-mode@context-mode-plus" → "context-mode").
   const ourServerName = pluginKey.split("@")[0];
   const ours = servers[ourServerName];
   if (!ours || typeof ours !== "object" || !Array.isArray(ours.args)) {
@@ -525,10 +525,10 @@ export function healClaudeJsonMcpArgs({ dotClaudeJsonPath, pluginCacheParent, ne
 
 /**
  * Remove every `.mcp.json` from per-version directories under
- * `<pluginCacheRoot>/<owner>/<plugin>/<X.Y.Z>/`.
+ * `<pluginCacheRoot>/<marketplace>/<plugin>/<X.Y.Z>/`.
  *
  * @param {{ pluginCacheRoot: string, pluginKey: string }} opts
- *   pluginKey is the "<owner>@<plugin>" form (e.g. "context-mode@context-mode").
+ *   pluginKey is the "<plugin>@<marketplace>" form (e.g. "context-mode@context-mode-plus").
  * @returns {SweepResult}
  */
 export function sweepStaleMcpJson({ pluginCacheRoot, pluginKey }) {
@@ -544,8 +544,8 @@ export function sweepStaleMcpJson({ pluginCacheRoot, pluginKey }) {
     return { removed, skipped: "no-cache-root" };
   }
 
-  // pluginKey shape: "<owner>@<plugin>"
-  const [ownerSegment, pluginSegment] = pluginKey.split("@");
+  // pluginKey shape: "<plugin>@<marketplace>"; Claude Code caches under cache/<marketplace>/<plugin>/.
+  const [pluginSegment, ownerSegment] = pluginKey.split("@");
   if (!ownerSegment || !pluginSegment) {
     return { removed, skipped: "bad-plugin-key" };
   }

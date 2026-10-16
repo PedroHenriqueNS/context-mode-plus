@@ -1262,7 +1262,7 @@ describe("Issue #636: legacy settings.json rewrite quotes spaced paths", () => {
     "rewritten command keeps spaced path quoted so /bin/sh sees one arg",
     () => {
       const spacedTargetDir =
-        "/Users/foo/Library/CloudStorage/Dropbox-2olhares/Lucas Werneck/.claude/plugins/cache/context-mode/context-mode/1.0.140";
+        "/Users/foo/Library/CloudStorage/Dropbox-2olhares/Lucas Werneck/.claude/plugins/cache/context-mode-plus/context-mode/1.0.140";
       const staleCommand =
         "node /old/path/context-mode/0.5.0/hooks/pretooluse.mjs";
 
@@ -1298,7 +1298,7 @@ describe("Issue #636: legacy settings.json rewrite quotes spaced paths", () => {
       // This documents what the bug looked like — if anyone ever reverts the
       // fix, the assertion above flips and this one stays as the diagnostic.
       const spacedTargetDir =
-        "/Users/foo/Library/CloudStorage/Lucas Werneck/.claude/plugins/cache/context-mode/context-mode/1.0.140";
+        "/Users/foo/Library/CloudStorage/Lucas Werneck/.claude/plugins/cache/context-mode-plus/context-mode/1.0.140";
       const buggyForm =
         "node " + resolve(spacedTargetDir, "hooks", "pretooluse.mjs");
       const probe = spawnSync(

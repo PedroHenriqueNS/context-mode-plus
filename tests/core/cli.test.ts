@@ -1476,8 +1476,8 @@ describe("start.mjs CLI self-heal", () => {
     }
 
     // Build a fake CC plugin layout under a fresh tmp dir:
-    //   <root>/.claude/plugins/cache/context-mode/context-mode/<version>/
-    //   <root>/.claude/plugins/marketplaces/context-mode/
+    //   <root>/.claude/plugins/cache/context-mode-plus/context-mode/<version>/
+    //   <root>/.claude/plugins/marketplaces/context-mode-plus/
     // The marketplace clone gets a realistic package.json files[] pointing
     // at a few canned dirs + files so the heal has concrete sources to
     // copy. The cache dir starts empty so each test can populate the exact
@@ -1491,14 +1491,14 @@ describe("start.mjs CLI self-heal", () => {
       const pluginRoot = resolve(
         pluginsDir,
         "cache",
-        "context-mode",
+        "context-mode-plus",
         "context-mode",
         version,
       );
       const marketplaceClonePath = resolve(
         pluginsDir,
         "marketplaces",
-        "context-mode",
+        "context-mode-plus",
       );
       mkdirSync(marketplaceClonePath, { recursive: true });
       writeFileSync(
@@ -1648,9 +1648,9 @@ describe("start.mjs CLI self-heal", () => {
       const { deriveMarketplaceClonePath } = await import(
         "../../hooks/heal-partial-install.mjs"
       );
-      const cache = "/home/u/.claude/plugins/cache/context-mode/context-mode/1.0.150";
+      const cache = "/home/u/.claude/plugins/cache/context-mode-plus/context-mode/1.0.150";
       expect(deriveMarketplaceClonePath(cache)).toBe(
-        resolve("/home/u/.claude/plugins/marketplaces/context-mode"),
+        resolve("/home/u/.claude/plugins/marketplaces/context-mode-plus"),
       );
     });
 
@@ -1658,9 +1658,9 @@ describe("start.mjs CLI self-heal", () => {
       const { deriveMarketplaceClonePath } = await import(
         "../../hooks/heal-partial-install.mjs"
       );
-      const cache = "/home/u/.claude/plugins/cache/context-mode/context-mode/1.0.150/";
+      const cache = "/home/u/.claude/plugins/cache/context-mode-plus/context-mode/1.0.150/";
       expect(deriveMarketplaceClonePath(cache)).toBe(
-        resolve("/home/u/.claude/plugins/marketplaces/context-mode"),
+        resolve("/home/u/.claude/plugins/marketplaces/context-mode-plus"),
       );
     });
 
@@ -1668,12 +1668,12 @@ describe("start.mjs CLI self-heal", () => {
       const { deriveMarketplaceClonePath } = await import(
         "../../hooks/heal-partial-install.mjs"
       );
-      const cache = "C:\\Users\\u\\.claude\\plugins\\cache\\context-mode\\context-mode\\1.0.150";
+      const cache = "C:\\Users\\u\\.claude\\plugins\\cache\\context-mode-plus\\context-mode\\1.0.150";
       const got = deriveMarketplaceClonePath(cache);
       // resolve() leaves the leading drive letter intact as a relative
       // segment on POSIX; the important assertion is the suffix.
       expect(String(got).replace(/\\/g, "/")).toMatch(
-        /plugins\/marketplaces\/context-mode$/,
+        /plugins\/marketplaces\/context-mode-plus$/,
       );
     });
 
@@ -1811,7 +1811,7 @@ describe("start.mjs CLI self-heal", () => {
               "context-mode": {
                 command: "/usr/bin/bun",
                 args: [
-                  "/home/u/.claude/plugins/cache/context-mode/context-mode/1.0.146/start.mjs",
+                  "/home/u/.claude/plugins/cache/context-mode-plus/context-mode/1.0.146/start.mjs",
                 ],
               },
             },
@@ -1876,7 +1876,7 @@ describe("start.mjs CLI self-heal", () => {
             "context-mode": {
               command: "/attacker/payload.sh",
               args: [
-                "/home/u/.claude/plugins/cache/context-mode/context-mode/1.0.146/start.mjs",
+                "/home/u/.claude/plugins/cache/context-mode-plus/context-mode/1.0.146/start.mjs",
               ],
             },
           },
@@ -2668,10 +2668,10 @@ describe("statuslineForward survives stale getPluginRoot() (post-upgrade)", () =
     // After ctx-upgrade, the running CLI binary may live in a cache dir that
     // sessionstart.mjs (#181) has already cleaned, so getPluginRoot() resolves
     // to a directory whose bin/statusline.mjs has been removed. Falling back
-    // to the marketplace clone (~/.claude/plugins/marketplaces/context-mode)
+    // to the marketplace clone (~/.claude/plugins/marketplaces/context-mode-plus)
     // keeps the statusline alive — that path is stable across upgrades and is
     // now refreshed every /ctx-upgrade per #418.
-    expect(fnBody).toMatch(/marketplaces[\\/]+["']?\s*,\s*["']?context-mode["']?|"marketplaces"\s*,\s*"context-mode"/);
+    expect(fnBody).toMatch(/marketplaces[\\/]+["']?\s*,\s*["']?context-mode-plus["']?|"marketplaces"\s*,\s*"context-mode-plus"/);
   });
 
   test("statuslineForward also tries installed_plugins.json install path", () => {
@@ -2727,11 +2727,11 @@ describe("ctx-upgrade syncs marketplace clone (#418)", () => {
   const upgradeStart = CLI_SOURCE.indexOf("async function upgrade");
   const upgradeBody = CLI_SOURCE.slice(upgradeStart);
 
-  test("upgrade() targets ~/.claude/plugins/marketplaces/context-mode for git refresh", () => {
+  test("upgrade() targets ~/.claude/plugins/marketplaces/context-mode-plus for git refresh", () => {
     // CC's marketplace clone (separate from cache dir) was previously left
     // pinned at the install-time commit; users running /ctx-upgrade never
     // received upstream changes through the marketplace metadata path.
-    expect(upgradeBody).toMatch(/marketplaces[\\/]+["']?\s*,\s*["']?context-mode["']?|"marketplaces"\s*,\s*"context-mode"/);
+    expect(upgradeBody).toMatch(/marketplaces[\\/]+["']?\s*,\s*["']?context-mode-plus["']?|"marketplaces"\s*,\s*"context-mode-plus"/);
   });
 
   test("upgrade() runs git fetch + reset against marketplace dir", () => {
@@ -3292,7 +3292,7 @@ describe("Upgrade syncs skills to active install path (#228)", () => {
 
   test("upgrade reads installed_plugins.json to find active install path", () => {
     expect(upgradeBody).toContain("installed_plugins.json");
-    expect(upgradeBody).toContain("context-mode@context-mode");
+    expect(upgradeBody).toContain("context-mode@context-mode-plus");
     expect(upgradeBody).toContain("installPath");
   });
 
@@ -3454,7 +3454,7 @@ describe("installed_plugins.json installPath containment", () => {
     const claudeRoot = mkdtempSync(join(tmpdir(), "installpath-containment-"));
     try {
       const cacheRoot = resolve(claudeRoot, "plugins", "cache");
-      const legitCacheDir = resolve(cacheRoot, "context-mode", "context-mode", "1.0.0");
+      const legitCacheDir = resolve(cacheRoot, "context-mode-plus", "context-mode", "1.0.0");
       const attackerDir = resolve(claudeRoot, "outside-cache", "evil");
       mkdirSync(legitCacheDir, { recursive: true });
       mkdirSync(attackerDir, { recursive: true });
@@ -3536,7 +3536,7 @@ describe("installed_plugins.json installPath containment", () => {
 
       // Create the cache tree inside the real target.
       const realCacheRoot = resolve(realTarget, "plugins", "cache");
-      const versionDir = resolve(realCacheRoot, "context-mode", "context-mode", "1.0.161");
+      const versionDir = resolve(realCacheRoot, "context-mode-plus", "context-mode", "1.0.161");
       mkdirSync(versionDir, { recursive: true });
 
       // Simulate ~/.claude → realTarget
@@ -3552,7 +3552,7 @@ describe("installed_plugins.json installPath containment", () => {
 
       // installPath as stored by the plugin registry: the physical path
       // under the real target (not the symlink path).
-      const physicalInstallPath = resolve(realTarget, "plugins", "cache", "context-mode", "context-mode", "1.0.161");
+      const physicalInstallPath = resolve(realTarget, "plugins", "cache", "context-mode-plus", "context-mode", "1.0.161");
 
       // Verification 1 — OLD behaviour (lexical, no fix):
       // The lexical comparison fails because the physical installPath
@@ -3867,7 +3867,7 @@ describe("Upgrade native ABI bootstrap", () => {
 //            Remediation: "run `ctx_upgrade` to rewrite to portable form".
 //            Missing config → SKIP (no false fail).
 //
-//   CHECK B: doctor scans `~/.claude/plugins/cache/context-mode/context-mode/*/`
+//   CHECK B: doctor scans `~/.claude/plugins/cache/context-mode-plus/context-mode/*/`
 //            for `.mcp.json` files (post-PR-620 these should not exist).
 //            Found → WARN (not fail) with remediation:
 //            "ctx_upgrade will sweep on next run".
@@ -3921,12 +3921,12 @@ describe("PR #620 slice 4 — doctor() surfaces persistence-tier bug class", () 
     // nesting per ISSUE-609-VERDICT path examples). cli.ts uses
     // path.join() so the literal appears as adjacent string args:
     //   join(homedir(), ".claude", "plugins", "cache",
-    //        "context-mode", "context-mode")
+    //        "context-mode-plus", "context-mode")
     // We assert on both the cache anchor segments AND the join args
     // (Mert standing rule — use platform-neutral path joins, not literal
     // separators that fail on Windows).
     expect(body).toMatch(/"plugins"\s*,\s*"cache"/);
-    expect(body).toMatch(/"context-mode"\s*,\s*"context-mode"/);
+    expect(body).toMatch(/"context-mode-plus"\s*,\s*"context-mode"/);
     // Must check for `.mcp.json` (the file that should not exist after
     // PR #620's architectural untrack — ISSUE-609-VERDICT §H1 → PR #618 → #620).
     const anchorIdx = body.indexOf("#609");

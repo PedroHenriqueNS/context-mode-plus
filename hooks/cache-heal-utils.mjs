@@ -181,7 +181,7 @@ export function selfHealCacheHealHook({
     if (!Array.isArray(inner)) continue;
     for (const h of inner) {
       if (typeof h?.command !== "string") continue;
-      if (!h.command.includes("context-mode-cache-heal")) continue;
+      if (!h.command.includes("context-mode-plus-cache-heal")) continue;
       if (!isStaleNodePath(h.command)) continue;
 
       // Stale → rewrite.
@@ -223,7 +223,7 @@ export function selfHealCacheHealHook({
  * sourced before every Bash tool call at bashProvider.ts:166). The snapshot
  * bakes an `export PATH='…'` line containing the active context-mode
  * `bin/` for the then-current cache version, e.g.
- *   …/.claude/plugins/cache/context-mode/context-mode/1.0.146/bin
+ *   …/.claude/plugins/cache/context-mode-plus/context-mode/1.0.146/bin
  *
  * /ctx-upgrade installs the new version and deletes the old cache dir
  * mid-session, but it never touches the snapshot — so every subsequent
@@ -232,7 +232,7 @@ export function selfHealCacheHealHook({
  *
  * This helper rewrites the version segment of every context-mode PATH
  * entry in every snapshot under `snapshotsDir` to `currentVersion`.
- * Anchored on the doubled `context-mode/context-mode/` segment so sibling
+ * Anchored on the `context-mode-plus/context-mode/` segment so sibling
  * plugins (`pm-skills/pm-toolkit`, `claude-adhd/claude-adhd`, …) and
  * shape-spoofing entries (`evil-owner/context-mode/1.0.146`) are
  * untouched.
@@ -278,9 +278,9 @@ export function rewriteShellSnapshots({ snapshotsDir, currentVersion }) {
   }
 
   // Match the version segment of any PATH entry of the form
-  //   …/plugins/cache/context-mode/context-mode/<VERSION>/bin
+  //   …/plugins/cache/context-mode-plus/context-mode/<VERSION>/bin
   // across all three path shapes (`/`, `\`, mixed). The doubled
-  // `context-mode/context-mode/` is the trust anchor — it prevents
+  // `context-mode-plus/context-mode/` is the trust anchor — it prevents
   // shape-spoofing from another owner.
   //
   // Captures:
@@ -289,7 +289,7 @@ export function rewriteShellSnapshots({ snapshotsDir, currentVersion }) {
   //   $2 — version segment (no separators)
   //   $3 — trailing separator + `bin`
   const versionSegmentRe =
-    /(context-mode[/\\]context-mode[/\\])([^/\\]+)([/\\]bin)/g;
+    /(context-mode-plus[/\\]context-mode[/\\])([^/\\]+)([/\\]bin)/g;
 
   for (const name of entries) {
     if (!name.endsWith(".sh")) continue;

@@ -101,7 +101,7 @@ describe("Issue #539 — Claude Code inside VS Code disambiguation", () => {
     // is present whenever the issue manifests in practice.
     process.env.VSCODE_PID = "12345";
     process.env.CLAUDE_PLUGIN_ROOT =
-      "/Users/me/.claude/plugins/cache/context-mode/context-mode/1.0.118";
+      "/Users/me/.claude/plugins/cache/context-mode-plus/context-mode/1.0.118";
 
     const signal = detectPlatform();
     expect(signal.platform).toBe("claude-code");
@@ -129,14 +129,14 @@ describe("Issue #539 — Claude Code inside VS Code disambiguation", () => {
         JSON.stringify({
           version: 2,
           plugins: {
-            "context-mode@context-mode": [
+            "context-mode@context-mode-plus": [
               {
                 installPath:
-                  "/Users/me/.claude/plugins/cache/context-mode/context-mode/1.0.121",
+                  "/Users/me/.claude/plugins/cache/context-mode-plus/context-mode/1.0.121",
               },
             ],
           },
-          enabledPlugins: { "context-mode@context-mode": true },
+          enabledPlugins: { "context-mode@context-mode-plus": true },
         }),
       );
 

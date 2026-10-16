@@ -1,5 +1,7 @@
 # Context Mode
 
+> **context-mode-plus is a fork of [mksglu/context-mode](https://github.com/mksglu/context-mode)** (v1.0.169) by Mert Koseoğlu, maintained at [PedroHenriqueNS/context-mode-plus](https://github.com/PedroHenriqueNS/context-mode-plus). It is an independent, unofficial fork, not affiliated with or endorsed by the original author. It keeps the original [Elastic License 2.0](LICENSE) and copyright notices, and it is not offered as a hosted or managed service. Fork details and the changes made against upstream: [docs/fork/](docs/fork/).
+
 **The other half of the context problem.**
 
 [![users](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fcdn.jsdelivr.net%2Fgh%2Fmksglu%2Fcontext-mode%40main%2Fstats.json&query=%24.message&label=users&color=brightgreen)](https://www.npmjs.com/package/context-mode) [![npm](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fcdn.jsdelivr.net%2Fgh%2Fmksglu%2Fcontext-mode%40main%2Fstats.json&query=%24.npm&label=npm&color=blue)](https://www.npmjs.com/package/context-mode) [![marketplace](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fcdn.jsdelivr.net%2Fgh%2Fmksglu%2Fcontext-mode%40main%2Fstats.json&query=%24.marketplace&label=marketplace&color=blue)](https://github.com/mksglu/context-mode) [![GitHub stars](https://img.shields.io/github/stars/mksglu/context-mode?style=flat&color=yellow)](https://github.com/mksglu/context-mode/stargazers) [![GitHub forks](https://img.shields.io/github/forks/mksglu/context-mode?style=flat&color=blue)](https://github.com/mksglu/context-mode/network/members) [![Last commit](https://img.shields.io/github/last-commit/mksglu/context-mode?color=green)](https://github.com/mksglu/context-mode/commits) [![License: ELv2](https://img.shields.io/badge/License-ELv2-blue.svg)](LICENSE)
@@ -69,8 +71,8 @@ Platforms are grouped by install complexity. Hook-capable platforms get automati
 **Install:**
 
 ```bash
-/plugin marketplace add mksglu/context-mode
-/plugin install context-mode@context-mode
+/plugin marketplace add PedroHenriqueNS/context-mode-plus
+/plugin install context-mode@context-mode-plus
 ```
 
 Restart Claude Code (or run `/reload-plugins`).
@@ -590,7 +592,7 @@ Full documentation: [`docs/adapters/openclaw.md`](docs/adapters/openclaw.md)
 1. Add the context-mode marketplace and install the plugin from Codex's plugin UI:
 
    ```bash
-   codex plugin marketplace add mksglu/context-mode
+   codex plugin marketplace add PedroHenriqueNS/context-mode-plus
    ```
 
 2. Enable plugin-provided hooks while the Codex feature is still gated:

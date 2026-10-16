@@ -415,15 +415,15 @@ describe("normalizeHooksOnStartup", () => {
 // and that hooks are *configured*, not that command paths point at it.
 //
 // Fix: detection + rewrite must also handle stale absolute paths whose
-// `context-mode/context-mode/<version>` segment differs from the current
+// `context-mode-plus/context-mode/<version>` segment differs from the current
 // pluginRoot. See `hooks/cache-heal-utils.mjs` `isStaleNodePath` for the
 // precedent on stale-absolute-path repair.
 // ─────────────────────────────────────────────────────────
 
 describe("normalize-hooks survives a version bump (#604)", () => {
   const NODE = "/usr/bin/node";
-  const ROOT_V135 = "/cache/context-mode/context-mode/1.0.135";
-  const ROOT_V136 = "/cache/context-mode/context-mode/1.0.136";
+  const ROOT_V135 = "/cache/context-mode-plus/context-mode/1.0.135";
+  const ROOT_V136 = "/cache/context-mode-plus/context-mode/1.0.136";
   const PLACEHOLDER_SOURCE = JSON.stringify({
     hooks: {
       SessionStart: [
@@ -471,8 +471,8 @@ describe("normalize-hooks survives a version bump (#604)", () => {
 
   test("normalizeHooksOnStartup self-heals stale hooks.json on next boot (end-to-end)", () => {
     const cacheBase = makeTmp();
-    const v135Dir = join(cacheBase, "context-mode", "context-mode", "1.0.135");
-    const v136Dir = join(cacheBase, "context-mode", "context-mode", "1.0.136");
+    const v135Dir = join(cacheBase, "context-mode-plus", "context-mode", "1.0.135");
+    const v136Dir = join(cacheBase, "context-mode-plus", "context-mode", "1.0.136");
     mkdirSync(join(v135Dir, "hooks"), { recursive: true });
     mkdirSync(join(v136Dir, "hooks"), { recursive: true });
 

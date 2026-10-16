@@ -65,7 +65,7 @@ export interface KillReport {
   totalKilled: number;
 }
 
-// Match BOTH `~/.claude/plugins/cache/context-mode/context-mode/<v>/start.mjs`
+// Match BOTH `~/.claude/plugins/cache/context-mode-plus/context-mode/<v>/start.mjs`
 // AND `~/.claude/plugins/marketplaces/context-mode/start.mjs` shapes.
 // Both can be alive concurrently — VERDICT R1 dump confirmed all four
 // PIDs simultaneously across three different versions on a real Mac.

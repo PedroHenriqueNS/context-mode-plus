@@ -83,7 +83,7 @@ function buildFakeRegistry(opts: {
   pluginSlug?: string;
 }): FakeRegistry {
   const root = makeTmp();
-  const owner = opts.ownerSlug ?? "context-mode";
+  const owner = opts.ownerSlug ?? "context-mode-plus";
   const plugin = opts.pluginSlug ?? "context-mode";
   const cacheRoot = resolve(root, "cache");
   const cacheDir = resolve(cacheRoot, owner, plugin, opts.cacheVersion);
@@ -119,7 +119,7 @@ function readRegistry(p: string): Record<string, unknown> {
   return JSON.parse(readFileSync(p, "utf-8"));
 }
 
-const KEY = "context-mode@context-mode";
+const KEY = "context-mode@context-mode-plus";
 
 // ─────────────────────────────────────────────────────────────────────────
 // Slice 1 — HEAL 3: per-plugin entry.version syncs from cache plugin.json
@@ -315,13 +315,13 @@ describe("healSettingsEnabledPlugins (v1.0.116)", () => {
 
     const result = healSettingsEnabledPlugins({
       settingsPath,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toContain("enabled-plugins");
     const after = JSON.parse(readFileSync(settingsPath, "utf-8"));
     expect(after.theme).toBe("dark"); // unrelated state preserved
-    expect(after.enabledPlugins).toEqual({ "context-mode@context-mode": true });
+    expect(after.enabledPlugins).toEqual({ "context-mode@context-mode-plus": true });
   });
 
   it("adds the key when section exists but ours is missing", () => {
@@ -331,14 +331,14 @@ describe("healSettingsEnabledPlugins (v1.0.116)", () => {
 
     const result = healSettingsEnabledPlugins({
       settingsPath,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toContain("enabled-plugins");
     const after = JSON.parse(readFileSync(settingsPath, "utf-8"));
     expect(after.enabledPlugins).toEqual({
       "other@other": true,
-      "context-mode@context-mode": true,
+      "context-mode@context-mode-plus": true,
     });
   });
 
@@ -347,13 +347,13 @@ describe("healSettingsEnabledPlugins (v1.0.116)", () => {
     const settingsPath = join(dir, "settings.json");
     writeFileSync(
       settingsPath,
-      JSON.stringify({ enabledPlugins: { "context-mode@context-mode": true } }, null, 2),
+      JSON.stringify({ enabledPlugins: { "context-mode@context-mode-plus": true } }, null, 2),
     );
     const before = readFileSync(settingsPath, "utf-8");
 
     const result = healSettingsEnabledPlugins({
       settingsPath,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toEqual([]);
@@ -365,24 +365,24 @@ describe("healSettingsEnabledPlugins (v1.0.116)", () => {
     const settingsPath = join(dir, "settings.json");
     writeFileSync(
       settingsPath,
-      JSON.stringify({ enabledPlugins: { "context-mode@context-mode": false } }, null, 2),
+      JSON.stringify({ enabledPlugins: { "context-mode@context-mode-plus": false } }, null, 2),
     );
 
     const result = healSettingsEnabledPlugins({
       settingsPath,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toEqual([]);
     expect(result.skipped).toBe("explicit-opt-out");
     const after = JSON.parse(readFileSync(settingsPath, "utf-8"));
-    expect(after.enabledPlugins["context-mode@context-mode"]).toBe(false);
+    expect(after.enabledPlugins["context-mode@context-mode-plus"]).toBe(false);
   });
 
   it("returns silent skip when settings.json does not exist (user not on Claude Code)", () => {
     const result = healSettingsEnabledPlugins({
       settingsPath: "/nonexistent/path/settings.json",
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
     expect(result.healed).toEqual([]);
     expect(result.skipped).toBe("no-settings");
@@ -447,7 +447,7 @@ describe("healPluginJsonMcpServers (Issue #523)", () => {
     const result = healPluginJsonMcpServers({
       pluginRoot,
       pluginCacheRoot: cacheRoot,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toContain("plugin-json-args");
@@ -485,7 +485,7 @@ describe("healPluginJsonMcpServers (Issue #523)", () => {
     const result = healPluginJsonMcpServers({
       pluginRoot,
       pluginCacheRoot: cacheRoot,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toContain("plugin-json-args");
@@ -514,7 +514,7 @@ describe("healPluginJsonMcpServers (Issue #523)", () => {
     const result = healPluginJsonMcpServers({
       pluginRoot,
       pluginCacheRoot: cacheRoot,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toEqual([]);
@@ -537,7 +537,7 @@ describe("healPluginJsonMcpServers (Issue #523)", () => {
     const result = healPluginJsonMcpServers({
       pluginRoot: escapedRoot,
       pluginCacheRoot: cacheRoot,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toEqual([]);
@@ -570,7 +570,7 @@ describe("healPluginJsonMcpServers (Issue #523)", () => {
     const result = healPluginJsonMcpServers({
       pluginRoot,
       pluginCacheRoot: cacheRoot,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toContain("plugin-json-args");
@@ -606,7 +606,7 @@ describe("healPluginJsonMcpServers (Issue #523)", () => {
     const result = healPluginJsonMcpServers({
       pluginRoot,
       pluginCacheRoot: cacheRoot,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toContain("plugin-json-args");
@@ -629,7 +629,7 @@ describe("healPluginJsonMcpServers (Issue #523)", () => {
     );
     mkdirSync(pluginRoot, { recursive: true });
     const stalePath =
-      resolve(cacheRoot, "context-mode", "context-mode", "1.0.103", "start.mjs");
+      resolve(cacheRoot, "context-mode-plus", "context-mode", "1.0.103", "start.mjs");
     const pluginJsonPath = buildPoisonedPluginJson({
       pluginRoot,
       args0: stalePath,
@@ -638,7 +638,7 @@ describe("healPluginJsonMcpServers (Issue #523)", () => {
     const result = healPluginJsonMcpServers({
       pluginRoot,
       pluginCacheRoot: cacheRoot,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toContain("plugin-json-args");
@@ -659,7 +659,7 @@ describe("healPluginJsonMcpServers (Issue #523)", () => {
     );
     mkdirSync(pluginRoot, { recursive: true });
     const winStalePath =
-      "C:\\Users\\Mert\\.claude\\plugins\\cache\\context-mode\\context-mode\\1.0.103\\start.mjs";
+      "C:\\Users\\Mert\\.claude\\plugins\\cache\\context-mode-plus\\context-mode\\1.0.103\\start.mjs";
     const pluginJsonPath = buildPoisonedPluginJson({
       pluginRoot,
       args0: winStalePath,
@@ -668,7 +668,7 @@ describe("healPluginJsonMcpServers (Issue #523)", () => {
     const result = healPluginJsonMcpServers({
       pluginRoot,
       pluginCacheRoot: cacheRoot,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toContain("plugin-json-args");
@@ -733,7 +733,7 @@ describe("healMcpJsonArgs (Issue #531)", () => {
     const result = healMcpJsonArgs({
       pluginRoot,
       pluginCacheRoot: cacheRoot,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toContain("mcp-json-args");
@@ -763,7 +763,7 @@ describe("healMcpJsonArgs (Issue #531)", () => {
     const result = healMcpJsonArgs({
       pluginRoot,
       pluginCacheRoot: cacheRoot,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toContain("mcp-json-args");
@@ -792,7 +792,7 @@ describe("healMcpJsonArgs (Issue #531)", () => {
     const result = healMcpJsonArgs({
       pluginRoot,
       pluginCacheRoot: cacheRoot,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toContain("mcp-json-args");
@@ -821,7 +821,7 @@ describe("healMcpJsonArgs (Issue #531)", () => {
     const result = healMcpJsonArgs({
       pluginRoot,
       pluginCacheRoot: cacheRoot,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toEqual([]);
@@ -843,7 +843,7 @@ describe("healMcpJsonArgs (Issue #531)", () => {
     const result = healMcpJsonArgs({
       pluginRoot: escapedRoot,
       pluginCacheRoot: cacheRoot,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toEqual([]);
@@ -876,7 +876,7 @@ describe("healMcpJsonArgs (Issue #531)", () => {
     const result = healMcpJsonArgs({
       pluginRoot,
       pluginCacheRoot: cacheRoot,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toContain("mcp-json-args");
@@ -907,7 +907,7 @@ describe("healMcpJsonArgs (Issue #531)", () => {
     const result = healMcpJsonArgs({
       pluginRoot,
       pluginCacheRoot: cacheRoot,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toEqual([]);
@@ -925,7 +925,7 @@ describe("healMcpJsonArgs (Issue #531)", () => {
     );
     mkdirSync(pluginRoot, { recursive: true });
     const stalePath =
-      resolve(cacheRoot, "context-mode", "context-mode", "1.0.103", "start.mjs");
+      resolve(cacheRoot, "context-mode-plus", "context-mode", "1.0.103", "start.mjs");
     const mcpJsonPath = buildPoisonedMcpJson({
       pluginRoot,
       args0: stalePath,
@@ -934,7 +934,7 @@ describe("healMcpJsonArgs (Issue #531)", () => {
     const result = healMcpJsonArgs({
       pluginRoot,
       pluginCacheRoot: cacheRoot,
-      pluginKey: "context-mode@context-mode",
+      pluginKey: "context-mode@context-mode-plus",
     });
 
     expect(result.healed).toContain("mcp-json-args");
@@ -957,7 +957,7 @@ import {
 describe("healClaudeJsonMcpArgs", () => {
   it("updates stale version path in args to new pluginRoot", () => {
     const tmp = makeTmp("ctx-claude-json-");
-    const cacheParent = join(tmp, "plugins", "cache", "context-mode", "context-mode");
+    const cacheParent = join(tmp, "plugins", "cache", "context-mode-plus", "context-mode");
     const oldPluginRoot = join(cacheParent, "1.0.134");
     const newPluginRoot = join(cacheParent, "1.0.135");
     mkdirSync(newPluginRoot, { recursive: true });
@@ -983,7 +983,7 @@ describe("healClaudeJsonMcpArgs", () => {
 
   it("no-ops when args already point at the new version", () => {
     const tmp = makeTmp("ctx-claude-json-noop-");
-    const cacheParent = join(tmp, "plugins", "cache", "context-mode", "context-mode");
+    const cacheParent = join(tmp, "plugins", "cache", "context-mode-plus", "context-mode");
     const newPluginRoot = join(cacheParent, "1.0.135");
     mkdirSync(newPluginRoot, { recursive: true });
 
@@ -1027,7 +1027,7 @@ describe("healClaudeJsonMcpArgs", () => {
 
   it("ignores args that are not inside the context-mode cache", () => {
     const tmp = makeTmp("ctx-claude-json-unrelated-");
-    const cacheParent = join(tmp, "plugins", "cache", "context-mode", "context-mode");
+    const cacheParent = join(tmp, "plugins", "cache", "context-mode-plus", "context-mode");
     const newPluginRoot = join(cacheParent, "1.0.135");
     mkdirSync(newPluginRoot, { recursive: true });
 
@@ -1057,7 +1057,7 @@ describe("healClaudeJsonMcpArgs", () => {
     // as the new MCP spawn target. The post-resolve startsWith guard
     // rejects the mutation; the arg is left untouched.
     const tmp = makeTmp("ctx-claude-json-traversal-");
-    const cacheParent = join(tmp, ".claude", "plugins", "cache", "context-mode", "context-mode");
+    const cacheParent = join(tmp, ".claude", "plugins", "cache", "context-mode-plus", "context-mode");
     const oldPluginRoot = join(cacheParent, "1.0.0");
     const newPluginRoot = join(cacheParent, "1.0.1");
     mkdirSync(oldPluginRoot, { recursive: true });

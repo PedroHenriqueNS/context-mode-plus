@@ -33,7 +33,7 @@ const REPO_ROOT = resolve(__dirname, "../..");
 const REPO_POSTINSTALL = resolve(REPO_ROOT, "scripts", "postinstall.mjs");
 const REPO_HEAL_IP = resolve(REPO_ROOT, "scripts", "heal-installed-plugins.mjs");
 const REPO_HEAL_SQLITE3 = resolve(REPO_ROOT, "scripts", "heal-better-sqlite3.mjs");
-const KEY = "context-mode@context-mode";
+const KEY = "context-mode@context-mode-plus";
 
 /**
  * Simulate an `npm install -g` package layout: copy postinstall + its
@@ -104,7 +104,7 @@ function buildFakeHome(opts: {
 }): FakeHome {
   const home = makeTmp("ctx-postinstall-home-");
   const pluginsRoot = resolve(home, ".claude", "plugins");
-  const cacheDir = resolve(pluginsRoot, "cache", "context-mode", "context-mode", opts.cacheVersion);
+  const cacheDir = resolve(pluginsRoot, "cache", "context-mode-plus", "context-mode", opts.cacheVersion);
   mkdirSync(resolve(cacheDir, ".claude-plugin"), { recursive: true });
   writeFileSync(
     resolve(cacheDir, ".claude-plugin", "plugin.json"),

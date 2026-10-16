@@ -18,13 +18,13 @@ import { resolve } from "node:path";
 
 const PLACEHOLDER = "${CLAUDE_PLUGIN_ROOT}";
 
-// #604: matches a cache path segment `context-mode/context-mode/<version>`.
+// #604: matches a cache path segment `context-mode-plus/context-mode/<version>`.
 // Capture group is the X.Y.Z version. Used to detect command paths frozen on a
 // previous-version dir that Claude Code's native plugin manager has since
 // cleaned up. `/g` so a single content blob with multiple stale references is
 // fully covered. Forward-slash only — callers convert beforehand.
 const CACHE_VERSION_RE =
-  /context-mode\/context-mode\/([0-9]+\.[0-9]+\.[0-9]+)(?=\/)/g;
+  /context-mode-plus\/context-mode\/([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.]+)?)(?=\/)/g;
 
 /** Convert any path string to forward slashes (MSYS-safe). */
 function fwd(p) {
@@ -34,13 +34,13 @@ function fwd(p) {
 /**
  * Extract the X.Y.Z version segment from a pluginRoot under the context-mode
  * cache layout. Returns null when running from npm-global, a dev checkout, or
- * any layout that does not match the `<…>/context-mode/context-mode/<v>(/…)?`
+ * any layout that does not match the `<…>/context-mode-plus/context-mode/<v>(/…)?`
  * pattern — callers must treat null as "no stale-path check is possible".
  */
 function pluginRootVersion(pluginRoot) {
   if (!pluginRoot) return null;
   const m =
-    /context-mode\/context-mode\/([0-9]+\.[0-9]+\.[0-9]+)(?:\/|$)/.exec(
+    /context-mode-plus\/context-mode\/([0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.]+)?)(?:\/|$)/.exec(
       fwd(pluginRoot),
     );
   return m ? m[1] : null;
@@ -134,12 +134,12 @@ export function normalizeHooksJson(content, nodePath, pluginRoot) {
           next = next.replace(/^\s*node\s+/, `"${safeNode}" `);
         }
         if (hasStale) {
-          // Re-point every `context-mode/context-mode/<old-version>/…` segment
+          // Re-point every `context-mode-plus/context-mode/<old-version>/…` segment
           // to the current pluginRoot's version. Operates on the forward-slash
           // form so MSYS-mangled paths heal as well.
           next = fwd(next).replace(
             CACHE_VERSION_RE,
-            `context-mode/context-mode/${currentVersion}`,
+            `context-mode-plus/context-mode/${currentVersion}`,
           );
         }
         h.command = next;
@@ -196,7 +196,7 @@ export function normalizePluginJson(content, nodePath, pluginRoot) {
         if (hasStaleCacheVersionSegment(next, currentVersion)) {
           next = fwd(next).replace(
             CACHE_VERSION_RE,
-            `context-mode/context-mode/${currentVersion}`,
+            `context-mode-plus/context-mode/${currentVersion}`,
           );
         }
         return next;

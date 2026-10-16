@@ -50,7 +50,7 @@ describe("selfHealShellSnapshots — SessionStart entry point", () => {
     const file = join(snapshotsDir, "snapshot-zsh-stale.sh");
     writeFileSync(
       file,
-      `export PATH='/Users/x/.claude/plugins/cache/context-mode/context-mode/1.0.146/bin:/usr/bin'\n`,
+      `export PATH='/Users/x/.claude/plugins/cache/context-mode-plus/context-mode/1.0.146/bin:/usr/bin'\n`,
       "utf-8",
     );
 
@@ -62,7 +62,7 @@ describe("selfHealShellSnapshots — SessionStart entry point", () => {
 
     expect(result.rewritten).toEqual([file]);
     const after = readFileSync(file, "utf-8");
-    expect(after).toContain("context-mode/context-mode/1.0.151/bin");
+    expect(after).toContain("context-mode-plus/context-mode/1.0.151/bin");
   });
 
   test("no-op when no snapshots reference context-mode", () => {

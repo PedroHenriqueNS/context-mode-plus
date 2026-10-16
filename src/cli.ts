@@ -1017,7 +1017,7 @@ async function doctor(): Promise<number> {
       ".claude",
       "plugins",
       "cache",
-      "context-mode",
+      "context-mode-plus",
       "context-mode",
     );
     if (!existsSync(cacheRoot)) {
@@ -1256,14 +1256,14 @@ async function upgrade(opts?: { platform?: string }) {
   const s = p.spinner();
 
   // Step 0: Sync the marketplace clone (#418).
-  // Claude Code reads plugin metadata from ~/.claude/plugins/marketplaces/context-mode/.
+  // Claude Code reads plugin metadata from ~/.claude/plugins/marketplaces/context-mode-plus/.
   // Without a git pull there, the marketplace stays pinned at the install-time
   // commit and CC keeps reporting the old version even after our cache dir is
   // updated — users then see "ctx-upgrade succeeded" but nothing actually
   // changed at the plugin-system level.
   // Issue #460 round-3: route through resolveClaudeConfigDir so users who
   // relocate their CC config root keep the marketplace clone in the same tree.
-  const marketplaceDir = resolve(resolveClaudeConfigDir(), "plugins", "marketplaces", "context-mode");
+  const marketplaceDir = resolve(resolveClaudeConfigDir(), "plugins", "marketplaces", "context-mode-plus");
   if (existsSync(join(marketplaceDir, ".git"))) {
     s.start("Syncing marketplace clone");
     try {
@@ -1302,10 +1302,10 @@ async function upgrade(opts?: { platform?: string }) {
   const localVersion = getLocalVersion();
   const tmpDir = join(tmpdir(), `context-mode-upgrade-${Date.now()}`);
 
-  s.start("Cloning mksglu/context-mode");
+  s.start("Cloning PedroHenriqueNS/context-mode-plus");
   try {
     execFileSync(
-      "git", ["clone", "--depth", "1", "https://github.com/mksglu/context-mode.git", tmpDir],
+      "git", ["clone", "--depth", "1", "https://github.com/PedroHenriqueNS/context-mode-plus.git", tmpDir],
       { stdio: "pipe", timeout: 30000 },
     );
     s.stop("Downloaded");
@@ -1550,7 +1550,7 @@ async function upgrade(opts?: { platform?: string }) {
         const ipPath = resolve(resolveClaudeConfigDir(), "plugins", "installed_plugins.json");
         if (existsSync(ipPath)) {
           const ip = JSON.parse(readFileSync(ipPath, "utf-8"));
-          const entries = ip?.plugins?.["context-mode@context-mode"];
+          const entries = ip?.plugins?.["context-mode@context-mode-plus"];
           if (Array.isArray(entries)) {
             for (const entry of entries) {
               const ip2 = entry?.installPath;
@@ -1586,7 +1586,7 @@ async function upgrade(opts?: { platform?: string }) {
       // truth shared with start.mjs HEAL block + postinstall.
       try {
         const pluginCacheRoot = resolve(resolveClaudeConfigDir(), "plugins", "cache");
-        const pluginKey = "context-mode@context-mode";
+        const pluginKey = "context-mode@context-mode-plus";
         const firstPass = healPluginJsonMcpServers({ pluginRoot, pluginCacheRoot, pluginKey });
         if (firstPass && firstPass.error) {
           throw new Error(firstPass.error);
@@ -1616,7 +1616,7 @@ async function upgrade(opts?: { platform?: string }) {
       // block + postinstall.
       try {
         const pluginCacheRoot = resolve(resolveClaudeConfigDir(), "plugins", "cache");
-        const pluginKey = "context-mode@context-mode";
+        const pluginKey = "context-mode@context-mode-plus";
         const firstSweep = sweepStaleMcpJson({ pluginCacheRoot, pluginKey });
         if (firstSweep && firstSweep.removed && firstSweep.removed.length > 0) {
           p.log.info(color.dim(`  Swept ${firstSweep.removed.length} stale .mcp.json file(s) from cache`));
@@ -1639,7 +1639,7 @@ async function upgrade(opts?: { platform?: string }) {
         // @ts-expect-error — JS module, no TS declarations
         const { healClaudeJsonMcpArgs } = await import("../scripts/heal-installed-plugins.mjs");
         const dotClaudeJson = resolve(homedir(), ".claude.json");
-        const pluginCacheParent = resolve(resolveClaudeConfigDir(), "plugins", "cache", "context-mode", "context-mode");
+        const pluginCacheParent = resolve(resolveClaudeConfigDir(), "plugins", "cache", "context-mode-plus", "context-mode");
         const result = healClaudeJsonMcpArgs({ dotClaudeJsonPath: dotClaudeJson, pluginCacheParent, newPluginRoot: pluginRoot });
         if (result.healed && result.healed.length > 0) {
           p.log.info(color.dim("  ~/.claude.json user MCP registrations updated → " + newVersion));
@@ -1808,7 +1808,7 @@ async function upgrade(opts?: { platform?: string }) {
           catch { cacheRootCanon = cacheRoot; }
           const cacheRootWithSep = cacheRootCanon + sep;
           const registry = JSON.parse(readFileSync(registryPath, "utf-8"));
-          const entries = registry?.plugins?.["context-mode@context-mode"];
+          const entries = registry?.plugins?.["context-mode@context-mode-plus"];
           if (Array.isArray(entries)) {
             for (const entry of entries) {
               const installPath = entry?.installPath;
@@ -1982,7 +1982,7 @@ function statuslineForward(): void {
   const claudeRoot = resolveClaudeConfigDir();
   const candidates: string[] = [
     resolve(getPluginRoot(), "bin", "statusline.mjs"),
-    resolve(claudeRoot, "plugins", "marketplaces", "context-mode", "bin", "statusline.mjs"),
+    resolve(claudeRoot, "plugins", "marketplaces", "context-mode-plus", "bin", "statusline.mjs"),
   ];
 
   // installed_plugins.json may list one or more install paths CC actually
@@ -2009,7 +2009,7 @@ function statuslineForward(): void {
       catch { cacheRootCanon = cacheRoot; }
       const cacheRootWithSep = cacheRootCanon + sep;
       const registry = JSON.parse(readFileSync(registryPath, "utf-8"));
-      const entries = registry?.plugins?.["context-mode@context-mode"];
+      const entries = registry?.plugins?.["context-mode@context-mode-plus"];
       if (Array.isArray(entries)) {
         for (const entry of entries) {
           const installPath = entry?.installPath;

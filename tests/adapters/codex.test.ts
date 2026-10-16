@@ -19,7 +19,7 @@ function pluginEnabledSettings(extra = ""): string {
   return `[features]
 hooks = true
 
-[plugins."context-mode@context-mode"]
+[plugins."context-mode@context-mode-plus"]
 enabled = true
 
 ${extra}`;
@@ -27,10 +27,10 @@ ${extra}`;
 
 function pluginListOutput(pluginRoot: string): string {
   return `Marketplace \`context-mode\`
-/Users/test/.codex/.tmp/marketplaces/context-mode/.agents/plugins/marketplace.json
+/Users/test/.codex/.tmp/marketplaces/context-mode-plus/.agents/plugins/marketplace.json
 
 PLUGIN                    STATUS              VERSION  PATH
-context-mode@context-mode  installed, enabled  1.0.162  ${pluginRoot}
+context-mode@context-mode-plus  installed, enabled  1.0.162  ${pluginRoot}
 `;
 }
 
@@ -343,7 +343,7 @@ describe("CodexAdapter", () => {
     });
 
     it("parses the context-mode runtime root from `codex plugin list` output", () => {
-      const pluginRoot = join(homedir(), ".codex", ".tmp", "marketplaces", "context-mode");
+      const pluginRoot = join(homedir(), ".codex", ".tmp", "marketplaces", "context-mode-plus");
       expect(parseCodexContextModePluginRoot(pluginListOutput(pluginRoot))).toBe(pluginRoot);
     });
 
@@ -584,11 +584,11 @@ describe("CodexAdapter", () => {
       writeFileSync(hooksPath, JSON.stringify({
         hooks: {
           UserPromptSubmit: [
-            { hooks: [{ type: "command", command: "node /Users/foo/.claude/plugins/cache/context-mode/context-mode/1.0.124/hooks/codex/userpromptsubmit.mjs" }] },
+            { hooks: [{ type: "command", command: "node /Users/foo/.claude/plugins/cache/context-mode-plus/context-mode/1.0.124/hooks/codex/userpromptsubmit.mjs" }] },
             { hooks: [{ type: "command", command: "context-mode hook codex userpromptsubmit" }] },
           ],
           Stop: [
-            { hooks: [{ type: "command", command: "/usr/bin/node /Users/foo/.claude/plugins/marketplaces/context-mode/hooks/codex/stop.mjs" }] },
+            { hooks: [{ type: "command", command: "/usr/bin/node /Users/foo/.claude/plugins/marketplaces/context-mode-plus/hooks/codex/stop.mjs" }] },
           ],
         },
       }, null, 2));
@@ -752,7 +752,7 @@ trusted_hash = "sha256:stale"
 
       const preTool = results.find((result) => result.check === "PreToolUse hook");
       expect(preTool?.status).toBe("pass");
-      expect(preTool?.message).toMatch(/context-mode@context-mode plugin/);
+      expect(preTool?.message).toMatch(/context-mode@context-mode-plus plugin/);
       const duplicate = results.find((result) => result.check === "PreToolUse plugin duplicate");
       expect(duplicate?.status).toBe("warn");
       expect(duplicate?.message).toMatch(/configured in both/);

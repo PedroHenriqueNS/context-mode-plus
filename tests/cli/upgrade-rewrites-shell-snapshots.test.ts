@@ -52,7 +52,7 @@ describe("ctx-upgrade Layer 1 — shell-snapshot heal", () => {
     const before =
       `export PATH='/Users/mksglu/.claude-worktree/shims:/opt/homebrew/bin:` +
       `/Users/mksglu/.claude/plugins/cache/pm-skills/pm-toolkit/1.0.1/bin:` +
-      `/Users/mksglu/.claude/plugins/cache/context-mode/context-mode/1.0.146/bin:` +
+      `/Users/mksglu/.claude/plugins/cache/context-mode-plus/context-mode/1.0.146/bin:` +
       `/Users/mksglu/.claude/plugins/cache/claude-adhd/claude-adhd/1.0.0/bin'\n`;
     writeFileSync(file, before, "utf-8");
 
@@ -64,12 +64,12 @@ describe("ctx-upgrade Layer 1 — shell-snapshot heal", () => {
     expect(result.rewritten).toEqual([file]);
     const after = readFileSync(file, "utf-8");
     expect(after).toContain(
-      "/cache/context-mode/context-mode/1.0.151/bin",
+      "/cache/context-mode-plus/context-mode/1.0.151/bin",
     );
     // Sibling plugins frozen at their own versions — must not move.
     expect(after).toContain("/cache/pm-skills/pm-toolkit/1.0.1/bin");
     expect(after).toContain("/cache/claude-adhd/claude-adhd/1.0.0/bin");
-    expect(after).not.toContain("context-mode/context-mode/1.0.146");
+    expect(after).not.toContain("context-mode-plus/context-mode/1.0.146");
   });
 
   test("multiple sessions on disk — every stale snapshot is healed", () => {
@@ -84,7 +84,7 @@ describe("ctx-upgrade Layer 1 — shell-snapshot heal", () => {
     for (const [i, v] of stalePins.entries()) {
       writeFileSync(
         join(snapshotsDir, `snapshot-zsh-${i}.sh`),
-        `export PATH='/x:/Users/x/.claude/plugins/cache/context-mode/context-mode/${v}/bin'\n`,
+        `export PATH='/x:/Users/x/.claude/plugins/cache/context-mode-plus/context-mode/${v}/bin'\n`,
         "utf-8",
       );
     }
@@ -100,8 +100,8 @@ describe("ctx-upgrade Layer 1 — shell-snapshot heal", () => {
         join(snapshotsDir, `snapshot-zsh-${i}.sh`),
         "utf-8",
       );
-      expect(content).toContain("context-mode/context-mode/1.0.151/bin");
-      expect(content).not.toContain(`context-mode/context-mode/${stalePins[i]}`);
+      expect(content).toContain("context-mode-plus/context-mode/1.0.151/bin");
+      expect(content).not.toContain(`context-mode-plus/context-mode/${stalePins[i]}`);
     }
   });
 
@@ -112,7 +112,7 @@ describe("ctx-upgrade Layer 1 — shell-snapshot heal", () => {
     const file = join(snapshotsDir, "snapshot-zsh-idem.sh");
     writeFileSync(
       file,
-      `export PATH='/Users/x/.claude/plugins/cache/context-mode/context-mode/1.0.146/bin'\n`,
+      `export PATH='/Users/x/.claude/plugins/cache/context-mode-plus/context-mode/1.0.146/bin'\n`,
       "utf-8",
     );
 

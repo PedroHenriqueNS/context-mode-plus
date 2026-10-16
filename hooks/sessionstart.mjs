@@ -134,7 +134,7 @@ await runHook(async () => {
     const { resolveConfigDir } = await import("./session-helpers.mjs");
 
     // Read the version this MCP boot is running under. PLUGIN_ROOT
-    // points at ~/.claude/plugins/cache/context-mode/context-mode/<vX>/.
+    // points at ~/.claude/plugins/cache/context-mode-plus/context-mode/<vX>/.
     let currentVersion = null;
     try {
       const pluginRoot = process.env.CLAUDE_PLUGIN_ROOT
@@ -152,7 +152,7 @@ await runHook(async () => {
         resolveConfigDir(),
         "plugins",
         "cache",
-        "context-mode",
+        "context-mode-plus",
         "context-mode",
       );
       selfHealShellSnapshots({
