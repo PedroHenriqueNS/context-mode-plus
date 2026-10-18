@@ -785,6 +785,36 @@ describe("Issues #814/#807 — cleanup leaves a breadcrumb to the live version",
     expect(realpathSync(oldLink)).toBe(realpathSync(currentDir));
   });
 
+  test("a CLAUDE_PLUGIN_ROOT that is a link never sweeps the real dir it resolves to", () => {
+    // Layout seen in the wild: installPath = .../1.0.200 (real), CC's
+    // CLAUDE_PLUGIN_ROOT = .../1.0.201, a breadcrumb link to it. The sweep used
+    // to delete the real 1.0.200 and replace it with a link back to 1.0.201,
+    // leaving a 1.0.200 <-> 1.0.201 cycle and no install at all.
+    const linkRoot = join(cacheParent, "1.0.201");
+    symlinkSync(currentDir, linkRoot, process.platform === "win32" ? "junction" : undefined);
+    utimesSync(currentDir, TWO_HOURS_AGO, TWO_HOURS_AGO);
+
+    const result = spawnSync("node", [join(linkRoot, "hooks", "sessionstart.mjs")], {
+      input: JSON.stringify({ session_id: "breadcrumb-link-root", source: "startup" }),
+      encoding: "utf-8",
+      timeout: 60_000,
+      env: {
+        ...process.env,
+        CLAUDE_PLUGIN_ROOT: linkRoot,
+        CLAUDE_PROJECT_DIR: fakeProjectDir,
+        CLAUDE_SESSION_ID: "breadcrumb-link-root",
+        CONTEXT_MODE_PLATFORM: "claude-code",
+        HOME: fakeHomeDir,
+        USERPROFILE: fakeHomeDir,
+      },
+    });
+    expect(result.status).toBe(0);
+
+    expect(lstatSync(currentDir).isDirectory()).toBe(true);
+    expect(existsSync(join(currentDir, "hooks", "sessionstart.mjs"))).toBe(true);
+    rmSync(linkRoot);
+  });
+
   test("a fresh version dir is left alone (#644 age gate still respected)", () => {
     const freshDir = join(cacheParent, "1.0.199");
     mkdirSync(freshDir, { recursive: true });

@@ -395,11 +395,16 @@ await runHook(async () => {
           if (cacheParentMatch) {
             const cacheParent = cacheParentMatch[1];
             const myDir = pluginRoot.replace(cacheParent, "").replace(/[\\/]/g, "");
+            // CLAUDE_PLUGIN_ROOT can itself be a breadcrumb link (CC builds it
+            // from `version` while installPath names another dir): the real dir
+            // it resolves to is the live install and must never be swept.
+            const liveRoot = realpathSync(pluginRoot);
             const ONE_HOUR = 3600000;
             const now = Date.now();
             for (const d of readdirSync(cacheParent)) {
               if (d === myDir) continue;
               const oldDir = join(cacheParent, d);
+              try { if (realpathSync(oldDir) === liveRoot) continue; } catch { /* dangling — handled below */ }
               try {
                 const st = lstatSync(oldDir);
                 let danglingBreadcrumb = false;
@@ -425,7 +430,7 @@ await runHook(async () => {
                   // again. Same pattern as healCacheMidSession (server.ts)
                   // and postinstall.mjs.
                   try {
-                    symlinkSync(pluginRoot, oldDir, process.platform === "win32" ? "junction" : undefined);
+                    symlinkSync(liveRoot, oldDir, process.platform === "win32" ? "junction" : undefined);
                   } catch { /* best effort — plain delete is the pre-#814 behaviour */ }
                 }
               } catch {
@@ -434,7 +439,7 @@ await runHook(async () => {
                 // repoint it at the live root; failures remain best-effort.
                 try {
                   rmSync(oldDir, { recursive: true, force: true });
-                  symlinkSync(pluginRoot, oldDir, process.platform === "win32" ? "junction" : undefined);
+                  symlinkSync(liveRoot, oldDir, process.platform === "win32" ? "junction" : undefined);
                 } catch { /* skip */ }
               }
             }

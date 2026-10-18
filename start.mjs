@@ -367,7 +367,8 @@ try{
       const parent=dirname(p);
       if(!existsSync(parent))continue;
       try{if(lstatSync(p).isSymbolicLink())unlinkSync(p)}catch{}
-      const dirs=readdirSync(parent).filter(d=>/^\\d+\\.\\d+/.test(d)&&statSync(join(parent,d)).isDirectory());
+      // Real dirs only: a dangling breadcrumb link made statSync throw and abort the heal.
+      const dirs=readdirSync(parent).filter(d=>{try{return/^\\d+\\.\\d+/.test(d)&&lstatSync(join(parent,d)).isDirectory()}catch{return false}});
       if(!dirs.length)continue;
       dirs.sort((a,b)=>{const p=v=>{const m=/^(\\d+)\\.(\\d+)\\.(\\d+)(?:-plus\\.(\\d+))?/.exec(v);return m?[+m[1],+m[2],+m[3],+(m[4]||0)]:[0,0,0,0]},pa=p(a),pb=p(b);for(let i=0;i<4;i++){if(pa[i]!==pb[i])return pa[i]-pb[i]}return 0});
       try{symlinkSync(join(parent,dirs[dirs.length-1]),p,process.platform==="win32"?"junction":undefined)}catch{}
