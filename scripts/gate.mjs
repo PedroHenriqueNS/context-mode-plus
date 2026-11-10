@@ -21,12 +21,19 @@
 // FAIL are not run; they print "SKIP <layer> not run: <failed layer> failed" so the output keeps
 // one line per layer. Child output goes to stderr only when its layer fails.
 // Exit 0 only if no layer printed FAIL. Node built-ins only.
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
+import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+// context-mode-plus: every layer runs with a throwaway home and without the config/data dir overrides, so no test or
+// e2e case (GP11 runs the ctx_upgrade uninstall) can reach the real ~/.claude or ~/.context-mode.
+const SANDBOX_HOME = mkdtempSync(path.join(tmpdir(), "cm-gate-home-"));
+const SANDBOX_ENV = { ...process.env, HOME: SANDBOX_HOME, USERPROFILE: SANDBOX_HOME };
+delete SANDBOX_ENV.CLAUDE_CONFIG_DIR;
+delete SANDBOX_ENV.CONTEXT_MODE_DATA_DIR;
 const MILESTONES = ["M0", "M1", "M2", "M3", "M4", "M5", "M6", "M7"];
 // v2-unit runs first: unit tests before E2E, the TEST-TRIAGE-r2 order (impl/14 §8 step 3);
 // D-M1-13 names the layer but not its place. The keep-pass layer is gone (D-M7-CLN-5).
@@ -60,6 +67,7 @@ function run(cmd, args, opts = {}) {
     encoding: "utf8",
     maxBuffer: CHILD_MAX_BUFFER,
     shell: process.platform === "win32" && cmd === "npx", // npx is npx.cmd on Windows
+    env: SANDBOX_ENV,
     ...opts,
   });
   return { status: r.status ?? 1, stdout: r.stdout ?? "", stderr: r.stderr ?? "", error: r.error };
