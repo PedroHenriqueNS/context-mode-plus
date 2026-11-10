@@ -69,7 +69,7 @@ It puts each touched file back. To remove the package too, see [Uninstall](./REA
 
 ## Report a problem
 
-Run `context-mode doctor --agents qwen`. A failed check prints a `gh issue create` command and a report file under `~/.context-mode/reports/`. Open the [v2 bug form](https://github.com/mksglu/context-mode/issues/new?template=bug.yml) and paste the report.
+Run `context-mode doctor --agents qwen`. A failed check prints a `gh issue create` command and a report file under `~/.context-mode/reports/`. Open the [v2 bug form](https://github.com/PedroHenriqueNS/context-mode-plus/issues/new?template=bug.yml) and paste the report.
 
 ## Verified
 

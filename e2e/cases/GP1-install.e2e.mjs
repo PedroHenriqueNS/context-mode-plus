@@ -393,7 +393,7 @@ import { vscodeMcpFile } from "../harness/vscode-user-dir.mjs";
   const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
   const HOSTS = ["claude-code", "codex", "copilot-cli", "gemini", "kiro", "opencode", "pi", "qwen", "vscode", "zcode"];
   const RETIRED_TOOLS = ["ctx_fetch_and_index", "ctx_batch_execute"];
-  const BUG_FORM = "https://github.com/mksglu/context-mode/issues/new?template=bug.yml";
+  const BUG_FORM = "https://github.com/PedroHenriqueNS/context-mode-plus/issues/new?template=bug.yml"; // context-mode-plus: reports go to the fork
   const DISCORD = "https://discord.gg/DCN9jUgN5v";
 
   const read = (rel) => readFileSync(path.join(REPO_ROOT, rel), "utf8");

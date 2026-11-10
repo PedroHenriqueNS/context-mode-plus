@@ -205,7 +205,7 @@ describe("GP11 release build audit", () => {
       assert.ok(!("private" in pkg), "release-out/package.json has private (ADR-0019 D1 publishes it)");
       assert.deepEqual(pkg.bin, { "context-mode": "cli.mjs" }, "release-out/package.json bin");
       assert.deepEqual(pkg.engines, { node: ">=24.15.0" }, "release-out/package.json engines");
-      assert.deepEqual(pkg.repository, { type: "git", url: "git+https://github.com/mksglu/context-mode.git" }, "release-out/package.json repository");
+      assert.deepEqual(pkg.repository, { type: "git", url: "git+https://github.com/PedroHenriqueNS/context-mode-plus.git" }, "release-out/package.json repository"); // context-mode-plus
       for (const k of ["description", "keywords", "license", "homepage", "bugs"]) assert.deepEqual(pkg[k], DEV[k], `release-out/package.json ${k} differs from package.json`);
     }
   });

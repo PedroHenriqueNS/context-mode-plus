@@ -59,8 +59,10 @@ env:
   CLAUDE_CODE_NPM: "@anthropic-ai/claude-code@2.1.283"
 jobs:
   ci:
+    if: github.repository == 'mksglu/context-mode' # context-mode-plus: upstream-only job
     uses: ./.github/workflows/ci.yml
   route:
+    if: github.repository == 'mksglu/context-mode' # context-mode-plus: upstream-only job
     runs-on: ubuntu-latest
     timeout-minutes: 2
     outputs:

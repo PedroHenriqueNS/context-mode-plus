@@ -77,7 +77,7 @@ ZCode 0.17.0 (built from zai-org/ZCode `3c5b2276`) reads `~/.zcode/cli/config.js
 
 ## Report a problem
 
-Run `context-mode doctor --agents zcode`. A failed check prints a `gh issue create` command and a report file under `~/.context-mode/reports/`. Open the [v2 bug form](https://github.com/mksglu/context-mode/issues/new?template=bug.yml) and paste the report.
+Run `context-mode doctor --agents zcode`. A failed check prints a `gh issue create` command and a report file under `~/.context-mode/reports/`. Open the [v2 bug form](https://github.com/PedroHenriqueNS/context-mode-plus/issues/new?template=bug.yml) and paste the report.
 
 ## Verified
 
