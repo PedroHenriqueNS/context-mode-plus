@@ -1174,13 +1174,32 @@ describe("PRD-v2 section 8: stage 1 (concurrent)", { concurrency: CONC }, () => 
         }
       });
 
+      test("ftsQueryTimeline with no cursor returns the newest page, oldest first, whole timestamp groups (rule 7)", async () => {
+        const { db, root, project } = await freshDb("9".repeat(16));
+        try {
+          const wt = project.worktree;
+          const ts = [100, 200, 200, 200, 300, 400];
+          for (const t of ts) at(db, "events", "seq", appendEvent(db, ev({ worktree: wt, body: `t${t}` })), t);
+          const p2 = ftsQueryTimeline(db, "worktree", project, "s1", 2, null, undefined, []);
+          assert.deepEqual(p2.rows.map((r) => r.ts), [300, 400]);
+          assert.equal(p2.more, false); // nothing is newer than the newest page
+          const p3 = ftsQueryTimeline(db, "worktree", project, "s1", 3, null, undefined, []);
+          assert.deepEqual(p3.rows.map((r) => r.ts), [200, 200, 200, 300, 400]); // group at 200 kept whole
+          const all = ftsQueryTimeline(db, "worktree", project, "s1", 20, null, undefined, []);
+          assert.deepEqual(all.rows.map((r) => r.ts), ts);
+        } finally {
+          closeDb(db);
+          rmSync(root, { recursive: true, force: true });
+        }
+      });
+
       test("ftsQueryTimeline pages by the after cursor and never ends a page inside a timestamp group (M18)", async () => {
         const { db, root, project } = await freshDb("d".repeat(16));
         try {
           const wt = project.worktree;
           const ts = [100, 200, 200, 200, 300, 400];
           for (const t of ts) at(db, "events", "seq", appendEvent(db, ev({ worktree: wt, body: `t${t}` })), t);
-          const p1 = ftsQueryTimeline(db, "worktree", project, "s1", 2, null, undefined, []);
+          const p1 = ftsQueryTimeline(db, "worktree", project, "s1", 2, 0, undefined, []); // after:0 starts at the oldest row
           assert.deepEqual(p1.rows.map((r) => r.ts), [100, 200, 200, 200]); // group at 200 kept whole
           assert.equal(p1.more, true);
           const p2 = ftsQueryTimeline(db, "worktree", project, "s1", 2, p1.rows.at(-1).ts, undefined, []);
@@ -1202,9 +1221,12 @@ describe("PRD-v2 section 8: stage 1 (concurrent)", { concurrency: CONC }, () => 
           const wt = project.worktree;
           for (let i = 0; i < 3; i++) at(db, "events", "seq", appendEvent(db, ev({ worktree: wt })), 10 + i);
           for (let i = 0; i < 3; i++) at(db, "sources", "id", ftsInsert(db, src({ worktree: wt }), [{ ord: 0, text: "c", bytes: 1 }]), 1 + i);
-          const { rows, more } = ftsQueryTimeline(db, "worktree", project, "s1", 3, null, undefined, []);
-          assert.deepEqual(rows.map((r) => r.origin), ["content", "content", "content"]);
-          assert.equal(more, true);
+          const newest = ftsQueryTimeline(db, "worktree", project, "s1", 3, null, undefined, []);
+          assert.deepEqual(newest.rows.map((r) => r.origin), ["session", "session", "session"]);
+          assert.equal(newest.more, false);
+          const oldest = ftsQueryTimeline(db, "worktree", project, "s1", 3, 0, undefined, []);
+          assert.deepEqual(oldest.rows.map((r) => r.origin), ["content", "content", "content"]);
+          assert.equal(oldest.more, true);
         } finally {
           closeDb(db);
           rmSync(root, { recursive: true, force: true });

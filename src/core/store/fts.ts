@@ -475,21 +475,27 @@ export function highlight(row: string, terms: string, maxBytes: number = SNIPPET
 
 // Shared scope filter (rule 2). Each source query fetches its own rows newer than `after` up to and
 // including the timestamp group of its limit-th row (rule 3, never clipped inside a group), oldest first.
+// With no cursor it fetches its newest `limit` rows instead, down to the start of that group (rule 7).
 const TL_SCOPE = `
     AND (:scope <> 'session' OR session_id = :session_id)
     AND (:scope <> 'worktree' OR worktree = :worktree)`;
 
-const TL_EVENTS = `
+// The limit-th row's timestamp bounds the window: from the oldest row after the cursor, or from the newest.
+const tlWindow = (cte: string, ts: string, id: string, newest: boolean): string => newest
+  ? `${ts} >= IFNULL((SELECT ${ts} FROM ${cte} ORDER BY ${ts} DESC, ${id} DESC LIMIT 1 OFFSET :off), ${ts})`
+  : `${ts} <= IFNULL((SELECT ${ts} FROM ${cte} ORDER BY ${ts}, ${id} LIMIT 1 OFFSET :off), ${ts})`;
+
+const tlEvents = (newest: boolean): string => `
 WITH e AS (
   SELECT seq, kind, key, path, body, created_at FROM events
   WHERE created_at > :after${TL_SCOPE}
     AND (:source IS NULL OR kind = :source)
 )
 SELECT seq, kind, key, path, body, created_at FROM e
-WHERE created_at <= IFNULL((SELECT created_at FROM e ORDER BY created_at, seq LIMIT 1 OFFSET :off), created_at)
+WHERE ${tlWindow("e", "created_at", "seq", newest)}
 ORDER BY created_at ASC, seq ASC`;
 
-const TL_SOURCES = `
+const tlSources = (newest: boolean): string => `
 WITH s AS (
   SELECT id, label, created_ts FROM sources
   WHERE created_ts > :after${TL_SCOPE}
@@ -497,7 +503,7 @@ WITH s AS (
     AND label <> :reserved
 )
 SELECT id, label, created_ts FROM s
-WHERE created_ts <= IFNULL((SELECT created_ts FROM s ORDER BY created_ts, id LIMIT 1 OFFSET :off), created_ts)
+WHERE ${tlWindow("s", "created_ts", "id", newest)}
 ORDER BY created_ts ASC, id ASC`;
 
 // First chunk of each listed source: the row body a content timeline line shows.
@@ -532,8 +538,10 @@ function timelineOrder(a: TimelineRow, b: TimelineRow): number {
 // impl/00 §4 + D-M2-3 (memory: already scope-filtered auto-memory rows, last argument) + D-M2-T3-1
 // (returns the page and whether rows remain). Every row label is a `source` value: content = the
 // source label, journal = its kind (so source:"decision" selects kind "decision", D3), memory = as
-// given. `after` = epoch-ms cursor (M18): rows with ts <= after are dropped; null starts at the
-// oldest row. The page holds `limit` rows, extended to the end of its last timestamp group (rule 6).
+// given. `after` = epoch-ms cursor (M18): rows with ts <= after are dropped, and the page holds the
+// oldest `limit` rows left, extended to the end of its last timestamp group (rule 6). null returns the
+// newest page in scope (rule 7): the newest `limit` rows, extended to the start of its first timestamp
+// group, still oldest first; no row is newer, so `more` is false.
 export function ftsQueryTimeline(
   db: DbHandle,
   scope: SearchScope,
@@ -550,12 +558,13 @@ export function ftsQueryTimeline(
     worktree: ctx.worktree,
     source: source ?? null,
   };
+  const newest = after === null;
   const from = after ?? -1;
   const reserved = DECISION_SOURCE;
   const off = limit - 1;
   const merged: TimelineRow[] = [];
 
-  for (const e of db.raw.prepare(TL_EVENTS).all({ ...filter, after: from, off }) as unknown as EventTlRow[]) {
+  for (const e of db.raw.prepare(tlEvents(newest)).all({ ...filter, after: from, off }) as unknown as EventTlRow[]) {
     merged.push({
       origin: "session",
       ts: Number(e.created_at),
@@ -567,7 +576,7 @@ export function ftsQueryTimeline(
     });
   }
 
-  const srcRows = db.raw.prepare(TL_SOURCES).all({ ...filter, after: from, off, reserved }) as unknown as SourceTlRow[];
+  const srcRows = db.raw.prepare(tlSources(newest)).all({ ...filter, after: from, off, reserved }) as unknown as SourceTlRow[];
   if (srcRows.length > 0) {
     const bodies = new Map<number, string>();
     const ids = JSON.stringify(srcRows.map((r) => Number(r.id)));
@@ -586,6 +595,11 @@ export function ftsQueryTimeline(
   }
 
   merged.sort(timelineOrder);
+  if (newest) {
+    let start = Math.max(0, merged.length - limit);
+    while (start > 0 && merged[start - 1].ts === merged[start].ts) start--;
+    return { rows: merged.slice(start), more: false };
+  }
   let end = Math.min(limit, merged.length);
   if (end > 0) {
     const last = merged[end - 1].ts;
