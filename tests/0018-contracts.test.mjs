@@ -423,7 +423,7 @@ describe("ADR-0018: contracts (concurrent)", { concurrency: CONC }, () => {
     });
 
     test("[M5] release constants for doctor D1 (D-M5-arch-5)", () => {
-      assert.equal(C.RELEASE_REPO_URL, "https://github.com/mksglu/context-mode.git");
+      assert.equal(C.RELEASE_REPO_URL, "https://github.com/PedroHenriqueNS/context-mode-plus.git");
       assert.equal(C.RELEASE_BRANCH, "release");
       assert.equal(C.BUNDLE_SHA_DEFINE, "__CTX_BUNDLE_SHA__");
       // dev/test build: no esbuild define, so the sha is unset (D1 reports UNKNOWN "dev build")

@@ -107,7 +107,7 @@ describe("ADR-0023 native install commands per host", { concurrency: CONC }, () 
   const NPM = ["npm i -g context-mode", "context-mode setup --agents"];
   // id -> [install block lines, update block lines]
   const NATIVE = {
-    "claude-code": [["claude plugin marketplace add mksglu/context-mode", "claude plugin install context-mode@context-mode"], ["claude plugin update context-mode@context-mode"]],
+    "claude-code": [["claude plugin marketplace add PedroHenriqueNS/context-mode-plus", "claude plugin install context-mode@context-mode-plus"], ["claude plugin update context-mode@context-mode-plus"]],
     codex: [["codex plugin marketplace add mksglu/context-mode", "codex plugin add context-mode@context-mode"], ["codex plugin marketplace upgrade context-mode"]],
     gemini: [["gemini extensions install https://github.com/mksglu/context-mode"], ["gemini extensions update context-mode"]],
     qwen: [["qwen extensions install https://github.com/mksglu/context-mode:context-mode"], ["qwen extensions update context-mode"]],

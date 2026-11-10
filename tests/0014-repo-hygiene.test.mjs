@@ -118,7 +118,7 @@ describe("ADR-0015 repo: removed-file gate (allow-list)", () => {
       "src/adapters/zed/extra.ts": "x",
       "skills/ctx-search/SKILL.md": "x",
       "configs/kiro/AGENTS.md": "x",
-      "CLAUDE.md": "x",
+      "sub/CLAUDE.md": "x", // a nested one: root CLAUDE.md is a context-mode-plus doc (check-removed FORK_FILES)
       ".github/copilot-instructions.md": "x",
       "src/other.ts": "const t = 'ctx_batch_execute';\n",
       "build/x.mjs": "// ctx_fetch_and_index\n",
@@ -131,7 +131,7 @@ describe("ADR-0015 repo: removed-file gate (allow-list)", () => {
     assert.deepEqual(got, [
       ".github/copilot-instructions.md",
       ".mcp.json.codex.example",
-      "CLAUDE.md",
+      "sub/CLAUDE.md",
       "build/x.mjs",
       "bun.lock",
       "configs/claude-code/hooks.json",
@@ -1090,7 +1090,7 @@ describe("ADR-0015 repo: README agent lines", () => {
     // Owner main rule: "tum agentlerin kendi native install commandleri ne ise onlari kullanalim userler yabancilik cekmesin".
     // A reader who copies the cell runs the whole install: Claude Code and Codex need the marketplace step first.
     const by = Object.fromEntries(agentRows().map((r) => [r.id, r.install]));
-    assert.equal(by["claude-code"], "`claude plugin marketplace add mksglu/context-mode`<br>`claude plugin install context-mode@context-mode`");
+    assert.equal(by["claude-code"], "`claude plugin marketplace add PedroHenriqueNS/context-mode-plus`<br>`claude plugin install context-mode@context-mode-plus`");
     assert.equal(by.codex, "`codex plugin marketplace add mksglu/context-mode`<br>`codex plugin add context-mode@context-mode`");
     assert.ok(!by.gemini.includes("<br>") && !by.pi.includes("<br>"), "one-command agents keep one command");
     const rows = readFileSync(path.join(REPO, "docs/architecture/DEVIATIONS.md"), "utf8").split("\n").filter((l) => l.startsWith("| D-README-INSTALL-CELL-1 |"));

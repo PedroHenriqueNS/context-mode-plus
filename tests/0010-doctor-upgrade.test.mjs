@@ -879,7 +879,7 @@ describe("ADR-0010 doctor D1, D2, D6, D7: version, node, mcp, mode, project", { 
   const SHA_B = "b".repeat(40);
   const VER = "2.0.0-next.26";
   const HEAD = `${VER} (aaaaaaa): `; // D-DOCTOR-D1-CAUSE-1: installed version and short bundle sha lead every detail
-  const GIT_FIX = 'git ls-remote --tags --refs https://github.com/mksglu/context-mode.git "v*"';
+  const GIT_FIX = `git ls-remote --tags --refs ${C.RELEASE_REPO_URL} "v*"`;
   const NPM_FIX = "npm view context-mode dist-tags";
   const DEAD_REGISTRY = "http://127.0.0.1:9/dist-tags"; // default: fetch blocks port 9 ("bad port"), no network use in tests
 
@@ -932,7 +932,7 @@ describe("ADR-0010 doctor D1, D2, D6, D7: version, node, mcp, mode, project", { 
     const env = fakeGit(t, tagsGit(["v2.0.0-next.25", `v${VER}`]));
     const row = await run(env, SHA_A, { registryUrl: await registry(t, 503, {}) });
     assert.deepEqual(row, { id: "D1", label: "version", status: "PASS", detail: `${HEAD}latest next on GitHub tags; npm registry answered HTTP 503` });
-    assert.equal(readFileSync(path.join(env.HOME, "git-argv"), "utf8"), "ls-remote --tags --refs https://github.com/mksglu/context-mode.git v*\n");
+    assert.equal(readFileSync(path.join(env.HOME, "git-argv"), "utf8"), `ls-remote --tags --refs ${C.RELEASE_REPO_URL} v*\n`);
   });
 
   test("[M5] doctor-env/D1-npm-same-version-is-PASS-and-git-is-not-started", { skip: !posix }, async (t) => {
@@ -2385,7 +2385,7 @@ describe("ADR-0010 ctx_upgrade tool", { concurrency: CONC }, () => {
     const lines = reply.text.split("\n");
     assert.equal(lines[0], "| Area | Before | After |");
     assert.equal(lines[1], "|---|---|---|");
-    assert.ok(lines.includes("| host update |  | claude plugin marketplace update context-mode && claude plugin update context-mode@context-mode |"), reply.text);
+    assert.ok(lines.includes("| host update |  | claude plugin marketplace update context-mode-plus && claude plugin update context-mode@context-mode-plus |"), reply.text);
     assert.ok(reply.text.endsWith("\n\nrestart needed"));
   });
 
@@ -2431,7 +2431,7 @@ describe("ADR-0010 ctx_upgrade tool", { concurrency: CONC }, () => {
   // D-R44-UPGRADE-NATIVE-1 (#1309): the release branch is gone. ctx_upgrade clones nothing and names each agent's
   // own update command; an old release-branch entry becomes the npm spec the agent's updater follows.
   for (const [agent, cmd] of [
-    ["claude-code", "claude plugin marketplace update context-mode && claude plugin update context-mode@context-mode"],
+    ["claude-code", "claude plugin marketplace update context-mode-plus && claude plugin update context-mode@context-mode-plus"],
     ["codex", "codex plugin marketplace upgrade context-mode"],
     ["gemini", "gemini extensions update context-mode"],
     ["qwen", "qwen extensions update context-mode"],
@@ -2458,13 +2458,13 @@ describe("ADR-0010 ctx_upgrade tool", { concurrency: CONC }, () => {
     mkdirSync(cfg, { recursive: true });
     const reply = await runUpgrade({}, deps(home, "claude-code", { env: { HOME: home, USERPROFILE: home, PATH: "", CLAUDE_CONFIG_DIR: cfg } }));
     const q = process.platform === "win32" ? "" : `CLAUDE_CONFIG_DIR='${cfg}' `; // claudeProfileEnv adds no words on Windows (POSIX quoting only)
-    assert.ok(reply.text.includes(`| host update |  | ${q}claude plugin marketplace update context-mode && ${q}claude plugin update context-mode@context-mode |`), reply.text);
+    assert.ok(reply.text.includes(`| host update |  | ${q}claude plugin marketplace update context-mode-plus && ${q}claude plugin update context-mode@context-mode-plus |`), reply.text);
   });
 
   // #1338 review: doctor D1 names the same profile-aware update command as ctx_upgrade.
   test("[M5] hostUpdateCommand puts the CLAUDE_CONFIG_DIR profile in front of each claude command and leaves other agents alone (#1338)", () => {
     const q = "CLAUDE_CONFIG_DIR='/p/cfg' ";
-    assert.equal(hostUpdateCommand("claude-code", { CLAUDE_CONFIG_DIR: "/p/cfg" }, "darwin"), `${q}claude plugin marketplace update context-mode && ${q}claude plugin update context-mode@context-mode`);
+    assert.equal(hostUpdateCommand("claude-code", { CLAUDE_CONFIG_DIR: "/p/cfg" }, "darwin"), `${q}claude plugin marketplace update context-mode-plus && ${q}claude plugin update context-mode@context-mode-plus`);
     assert.equal(hostUpdateCommand("claude-code", {}, "darwin"), C.UPGRADE_HOST_COMMAND["claude-code"]);
     assert.equal(hostUpdateCommand("opencode", { CLAUDE_CONFIG_DIR: "/p/cfg" }, "darwin"), C.UPGRADE_HOST_COMMAND.opencode);
     const doctorSrc = readFileSync(new URL("../src/core/tools/doctor.ts", import.meta.url), "utf8");
@@ -2765,7 +2765,7 @@ describe("ADR-0010 ctx_doctor agent issue path (D-DOCTOR-ISSUE-1)", { concurrenc
       .run("s1", h, "claude-code", "cmd", "Bash", 0, 2, 1234, "SECRETBODY", 1, Date.now(), Date.now());
     closeDb(db);
     mkdirSync(path.join(h, ".claude"), { recursive: true });
-    writeFileSync(path.join(h, ".claude", "settings.json"), JSON.stringify({ enabledPlugins: { "context-mode@context-mode": true }, env: { GITHUB_TOKEN: "ghp_seedsecret" } }, null, 2));
+    writeFileSync(path.join(h, ".claude", "settings.json"), JSON.stringify({ enabledPlugins: { "context-mode@context-mode-plus": true }, env: { GITHUB_TOKEN: "ghp_seedsecret" } }, null, 2));
     const { doctorReply } = await import("../src/core/tools/doctor.ts");
     const reply = await doctorReply(ctx, hostOf(h, { CODEX_HOME: path.join(h, "codex-home") }));
     const lines = reply.text.split("\n");
@@ -2781,7 +2781,7 @@ describe("ADR-0010 ctx_doctor agent issue path (D-DOCTOR-ISSUE-1)", { concurrenc
     assert.equal(docs.length, 1, reply.text);
     assert.ok(docs[0].startsWith("Docs: https://contextmode.ai/docs/engine/doctor?utm_source=ctx_doctor&utm_medium=doctor&utm_content=D"), docs[0]);
     // D-DOCTOR-FIX-1: every line outside the table fits 80 columns; the two URL lines are one link each.
-    for (const l of lines.filter((x) => !x.startsWith("| ") && !x.startsWith("Docs: ") && !x.startsWith("Or open: "))) assert.ok([...l].length <= 80, l);
+    for (const l of lines.filter((x) => !x.startsWith("| ") && !x.startsWith("Docs: ") && !x.startsWith("Or open: ") && !x.startsWith("Rules: "))) assert.ok([...l].length <= 80, l); // context-mode-plus: the fork's longer slug makes Rules: a long one-link line too
     // 6. Report path (home as ~), gh line and the prefilled form URL.
     const rep = lines.find((l) => l.startsWith("Report file: ~/.context-mode/reports/doctor-"));
     assert.ok(rep, reply.text);
@@ -2792,7 +2792,7 @@ describe("ADR-0010 ctx_doctor agent issue path (D-DOCTOR-ISSUE-1)", { concurrenc
     assert.ok(gi > 0, reply.text);
     assert.ok(lines[gi + 1].startsWith("  --title \"ctx_doctor claude-code: ") && lines[gi + 1].endsWith(" \\"), lines[gi + 1]);
     assert.ok(lines[gi + 2].startsWith("  --body-file ~/.context-mode/reports/doctor-"), lines[gi + 2]);
-    const url = lines.find((l) => l.startsWith("Or open: https://github.com/mksglu/context-mode/issues/new?template=agent-report.yml&"));
+    const url = lines.find((l) => l.startsWith(`Or open: https://github.com/${C.ISSUE_REPO_SLUG}/issues/new?template=agent-report.yml&`));
     assert.ok(url && url.length < 8000, url);
     // 10. The report holds every form field, in the form's order, and the debug data, with home as ~ and secrets masked.
     const body = readFileSync(file, "utf8");
@@ -2803,8 +2803,8 @@ describe("ADR-0010 ctx_doctor agent issue path (D-DOCTOR-ISSUE-1)", { concurrenc
       at = i;
     }
     for (const need of ["SEEDLABEL", "2026-11-03T01:02:03.000Z", "| kind | tool | bytes | ok | exit_code | created_at |", "| cmd | Bash | 1234 | 0 | 2 |",
-      "~/.claude/settings.json", "context-mode@context-mode", "CODEX_HOME=~/codex-home", "CLAUDE_CONFIG_DIR", "PATH holds node:", "git version",
-      "Install route:", "claude plugin marketplace add mksglu/context-mode", "Prompt or command:", "Expected:", "Actual:", "mktemp -d", "Reproduced:", C.REPORT_HEADER]) {
+      "~/.claude/settings.json", "context-mode@context-mode-plus", "CODEX_HOME=~/codex-home", "CLAUDE_CONFIG_DIR", "PATH holds node:", "git version",
+      "Install route:", `claude plugin marketplace add ${C.FORK_REPO_SLUG}`, "Prompt or command:", "Expected:", "Actual:", "mktemp -d", "Reproduced:", C.REPORT_HEADER]) {
       assert.ok(body.includes(need), "report must hold: " + need);
     }
     for (const leak of ["SECRETBODY", "ghp_seedsecret", h]) assert.ok(!body.includes(leak), "report leaks: " + leak);

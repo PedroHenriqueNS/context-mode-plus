@@ -3,14 +3,14 @@
 ## Install
 
 ```sh
-claude plugin marketplace add mksglu/context-mode
-claude plugin install context-mode@context-mode
+claude plugin marketplace add PedroHenriqueNS/context-mode-plus
+claude plugin install context-mode@context-mode-plus
 ```
 
 Update:
 
 ```sh
-claude plugin update context-mode@context-mode
+claude plugin update context-mode@context-mode-plus
 ```
 
 Check: `context-mode doctor`
@@ -31,7 +31,7 @@ To do the setup step by hand, run `context-mode setup --print claude-code` and f
 
 ## What setup changes
 
-- Runs `claude plugin marketplace add` on the installed package folder, then `claude plugin install context-mode@context-mode`.
+- Runs `claude plugin marketplace add` on the installed package folder, then `claude plugin install context-mode@context-mode-plus`.
 - The plugin brings the MCP server, the hooks (`hooks/claude-code.json`: SessionStart, UserPromptSubmit, PreToolUse, PostToolUse) and the skills `/ctx-doctor`, `/ctx-stats` and `/ctx-upgrade`.
 - Removes old context-mode hook commands from `~/.claude/settings.json`.
 - Effect: the call runs, then a large result is replaced by a short selection that names `ctx_search` (replace).
@@ -45,7 +45,7 @@ context-mode doctor --agents claude-code
 claude plugin list
 ```
 
-`context-mode@context-mode` must be listed and enabled. Then run `/ctx-doctor` in Claude Code.
+`context-mode@context-mode-plus` must be listed and enabled. Then run `/ctx-doctor` in Claude Code.
 
 ## Remove
 
@@ -63,16 +63,16 @@ It puts each touched file back. To remove the package too, see [Uninstall](./REA
 
 ## Known limits
 
-- The setup route adds the package folder from npm as a marketplace. The native route adds `mksglu/context-mode` from GitHub; use one of the two, not both.
+- The setup route adds the package folder from npm as a marketplace. The native route adds `PedroHenriqueNS/context-mode-plus` from GitHub; use one of the two, not both.
 - Verified live on Claude Code 2.1.274 without a login: `claude -p` against a local fake Anthropic endpoint ran our hook and the model saw the `ctx_search(` redirect for a 200 KB file (`tests/e2e/claude-code-fire.test.mjs`). A logged-in session was not run.
-- Hooks do not run when the plugin is disabled (`claude plugin enable context-mode@context-mode`; setup does this for you) or when `disableAllHooks` is `true` in a Claude Code settings file. Doctor fails with the fix for both; it never edits your settings.
+- Hooks do not run when the plugin is disabled (`claude plugin enable context-mode@context-mode-plus`; setup does this for you) or when `disableAllHooks` is `true` in a Claude Code settings file. Doctor fails with the fix for both; it never edits your settings.
 - `claude mcp add` by hand adds the MCP server only, with no hooks. Use `context-mode setup --print claude-code` instead.
 - Skill and rule files under `~/.claude` (or `$CLAUDE_CONFIG_DIR`), such as `skills/<skill>/references/*.md`, rule files and `CLAUDE.md`, reach the model whole at any size (#1326).
 - A tool output over 4,096 bytes comes back as a short search pointer. To get larger outputs whole, set `CTX_REPLACE_TRIGGER_BYTES` (a positive integer of bytes, for example `8192`) in the environment Claude Code starts from. A higher value saves less context: 8192 saves about 23% of tool bytes against 42% at 4096 on our bench.
 
 ## Report a problem
 
-Run `context-mode doctor --agents claude-code`. A failed check prints a `gh issue create` command and a report file under `~/.context-mode/reports/`. Open the [v2 bug form](https://github.com/mksglu/context-mode/issues/new?template=bug.yml) and paste the report.
+Run `context-mode doctor --agents claude-code`. A failed check prints a `gh issue create` command and a report file under `~/.context-mode/reports/`. Open the [v2 bug form](https://github.com/PedroHenriqueNS/context-mode-plus/issues/new?template=bug.yml) and paste the report.
 
 To keep the data of each Claude Code profile apart, set `CONTEXT_MODE_DATA_DIR` to its own folder, for example in the `env` block of that profile's `settings.json`. Unset, the data stays in `~/.context-mode`.
 

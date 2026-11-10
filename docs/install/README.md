@@ -14,7 +14,7 @@ The agents with no install command of their own use the npm route: `npm i -g con
 
 | Agent | Install | Update |
 |---|---|---|
-| Claude Code | `claude plugin marketplace add mksglu/context-mode`, then `claude plugin install context-mode@context-mode` | `claude plugin update context-mode@context-mode` |
+| Claude Code | `claude plugin marketplace add PedroHenriqueNS/context-mode-plus`, then `claude plugin install context-mode@context-mode-plus` | `claude plugin update context-mode@context-mode-plus` |
 | Codex | `codex plugin marketplace add mksglu/context-mode`, then `codex plugin add context-mode@context-mode` | `codex plugin marketplace upgrade context-mode` |
 | Gemini CLI | `gemini extensions install https://github.com/mksglu/context-mode` | `gemini extensions update context-mode` |
 | Qwen Code | `qwen extensions install https://github.com/mksglu/context-mode:context-mode` | `qwen extensions update context-mode` |
@@ -134,7 +134,7 @@ If you update with npm yourself (`npm i -g context-mode`), most agents need noth
 
 | Agent | After `npm i -g` |
 |---|---|
-| Claude Code | Claude Code runs its own copy of the plugin. Run `context-mode setup --repair` (it runs `claude plugin marketplace update context-mode` and `claude plugin update context-mode@context-mode` in the profile it found), or run those two commands yourself. `context-mode doctor` fails with this fix line while the copy is old. |
+| Claude Code | Claude Code runs its own copy of the plugin. Run `context-mode setup --repair` (it runs `claude plugin marketplace update context-mode-plus` and `claude plugin update context-mode@context-mode-plus` in the profile it found), or run those two commands yourself. `context-mode doctor` fails with this fix line while the copy is old. |
 | Codex, Copilot CLI, Gemini CLI, Kiro, OpenCode, Pi, Qwen Code, VS Code, Z Code | Nothing. Restart the agent. |
 
 Run `context-mode doctor` to check. It changes nothing.
@@ -154,7 +154,7 @@ npm rm -g context-mode
 
 Run `context-mode doctor`. It checks each agent and changes nothing. On a TTY, a failed agent gets one question: fix now.
 
-A failed check prints the agent, the reason, a fix command, and a `gh issue create` command. The report file is under `~/.context-mode/reports/`. Open the [v2 bug form](https://github.com/mksglu/context-mode/issues/new?template=bug.yml) and paste it.
+A failed check prints the agent, the reason, a fix command, and a `gh issue create` command. The report file is under `~/.context-mode/reports/`. Open the [v2 bug form](https://github.com/PedroHenriqueNS/context-mode-plus/issues/new?template=bug.yml) and paste it.
 
 ## Verified
 

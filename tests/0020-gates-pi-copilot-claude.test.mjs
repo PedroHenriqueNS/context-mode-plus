@@ -8,7 +8,7 @@ import assert from "node:assert/strict";
 import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { TOOL_ORDER } from "../src/core/contracts/constants.ts";
+import { CLAUDE_MARKETPLACE_NAME, TOOL_ORDER } from "../src/core/contracts/constants.ts";
 import { buildRegistry, isOwnHookCommand, runDoctor, runRemove, runSetup } from "../src/setup/index.ts";
 import { createHash } from "node:crypto";
 import { generateManifests } from "../build/manifests.ts";
@@ -321,7 +321,7 @@ createInterface({ input: process.stdin }).on("line", (l) => {
 
     const SKIP = process.platform === "win32" && "fake agent binaries are sh scripts";
     const REPO = path.resolve(import.meta.dirname, "..");
-    const PLUGIN = "context-mode@context-mode";
+    const PLUGIN = `context-mode@${CLAUDE_MARKETPLACE_NAME}`;
 
     // The text `claude plugin list` prints (2.1.274): a block per plugin, the Status line ends in enabled / disabled.
     const FAKE = (state) => `case "$1 $2" in
@@ -378,7 +378,7 @@ createInterface({ input: process.stdin }).on("line", (l) => {
       writeFileSync(`${s.state}.off`, "");
       const before = await runDoctor(opts(s));
       assert.equal(before.exitCode, 1, "doctor FAILs while the plugin is disabled");
-      assert.match(before.agents[0].reason, /hook-enabled: .*disabled.*claude plugin enable context-mode@context-mode/);
+      assert.match(before.agents[0].reason, /hook-enabled: .*disabled.*claude plugin enable context-mode@context-mode-plus/);
       const res = await runSetup({ ...opts(s), runId: "r1" });
       assert.equal(res.agents[0].status, "PASS", JSON.stringify(res.agents[0], null, 2));
       assert.equal(readFileSync(`${s.state}.log`, "utf8"), "enabled\n", "setup ran claude plugin enable once");

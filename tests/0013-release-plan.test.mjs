@@ -1142,7 +1142,7 @@ describe("[WHO] D-REL-WHO-1 release plan: who gets this release", { concurrency:
       "",
       "| Agent | Channel | Update with |",
       "|---|---|---|",
-      "| Claude Code | GitHub | `claude plugin update context-mode@context-mode` |",
+      "| Claude Code | GitHub | `claude plugin update context-mode@context-mode-plus` |",
       "| Codex | GitHub, npm for the one-time hook trust step | `codex plugin marketplace upgrade context-mode` |",
       "| Pi | npm | `pi update --extensions` |",
       "",

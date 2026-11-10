@@ -10,7 +10,7 @@ Security problems go to https://github.com/mksglu/context-mode/security/advisori
 
 Follow every rule. Each one names a fact the maintainer needs to replay the bug.
 
-1. Search for the same problem first: `gh issue list -R mksglu/context-mode --state all --search "<check id or error>"`. When one matches, add your facts there as a comment.
+1. Search for the same problem first: `gh issue list -R PedroHenriqueNS/context-mode-plus --state all --search "<check id or error>"`. When one matches, add your facts there as a comment.
 2. File one bug per issue.
 3. Call the `ctx_doctor` tool and paste its full output unchanged in the `ctx-report` field.
 4. Give the versions: context-mode, the agent, the OS and arch, and Node.
@@ -20,11 +20,11 @@ Follow every rule. Each one names a fact the maintainer needs to replay the bug.
 8. Name the source file and line when you found the cause.
 9. Replace every secret with `<masked>` and the home folder with `~` before you send.
 
-Fast path: when a `ctx_doctor` row FAILs, ctx_doctor writes the whole issue body to `~/.context-mode/reports/doctor-<utc>.md` and prints a ready `gh issue create --repo mksglu/context-mode ... --body-file <that file>` line, a link to the form `.github/ISSUE_TEMPLATE/agent-report.yml`, and a `Rules:` link to this page. The file already holds every section of the form: the doctor table, versions, install route, config entries, hook errors, journal rows and env paths. Run each Fix first. When a FAIL stays, fill the `<...>` lines in What happened, Expected and Steps, show the file to the user, and send it after the user agrees. Sections 0 to 7 below say what each part means.
+Fast path: when a `ctx_doctor` row FAILs, ctx_doctor writes the whole issue body to `~/.context-mode/reports/doctor-<utc>.md` and prints a ready `gh issue create --repo PedroHenriqueNS/context-mode-plus ... --body-file <that file>` line, a link to the form `.github/ISSUE_TEMPLATE/agent-report.yml`, and a `Rules:` link to this page. The file already holds every section of the form: the doctor table, versions, install route, config entries, hook errors, journal rows and env paths. Run each Fix first. When a FAIL stays, fill the `<...>` lines in What happened, Expected and Steps, show the file to the user, and send it after the user agrees. Sections 0 to 7 below say what each part means.
 
 ## 0. Before you start
 
-1. Look for the same problem: `gh issue list -R mksglu/context-mode --state all --search "<error code or check id>"`. When an open issue matches, add your facts as a comment on it.
+1. Look for the same problem: `gh issue list -R PedroHenriqueNS/context-mode-plus --state all --search "<error code or check id>"`. When an open issue matches, add your facts as a comment on it.
 2. Only the 2.0 line gets fixes. The `ctx_doctor` output of a 2.0 install starts with the table header `| Check | Status | Detail | Fix |`. When the tool is absent or the output looks different, the user runs 1.x: point the user to https://github.com/mksglu/context-mode#install and stop.
 3. Run every command in the agent and the project where the problem happens. To report a problem in another agent, ask the user to run `/ctx-doctor` there and hand you the table.
 
@@ -67,7 +67,7 @@ Run these steps yourself before you file, in a new shell session with a temporar
    ```
    (PowerShell: set `$env:USERPROFILE` to a new folder.) Agent logins live under HOME; steps that need a model call say so under Steps and name the agent. The doctor, setup and hook steps run with the agent logged out.
 2. Install with the agent's own native command, then run the terminal doctor:
-   - Claude Code: `claude plugin marketplace add mksglu/context-mode` then `claude plugin install context-mode@context-mode`
+   - Claude Code: `claude plugin marketplace add PedroHenriqueNS/context-mode-plus` then `claude plugin install context-mode@context-mode-plus`
    - Codex: `codex plugin marketplace add mksglu/context-mode` then `codex plugin add context-mode@context-mode`
    - Gemini CLI: `gemini extensions install https://github.com/mksglu/context-mode`
    - Qwen Code: `qwen extensions install https://github.com/mksglu/context-mode:context-mode`
@@ -224,7 +224,7 @@ Read keeps its object shape; the warning stays away; the agent sees a 180 B poin
 
 Reproduced: yes (2 of 2)
 1. `export REPRO=$(mktemp -d); export HOME="$REPRO/home"; mkdir -p "$HOME"; cd "$REPRO"`
-2. `claude plugin marketplace add mksglu/context-mode` then `claude plugin install context-mode@context-mode`
+2. `claude plugin marketplace add PedroHenriqueNS/context-mode-plus` then `claude plugin install context-mode@context-mode-plus`
 3. `head -c 30000 /dev/urandom | base64 > big.txt; wc -c big.txt` gives 40538 B
 4. Send the PostToolUse Read payload for big.txt to the hook:
 
@@ -248,9 +248,9 @@ Filed by: <agent name, version, model id>
 Show the user the title and the full body, then send after the user agrees. The user owns the GitHub account:
 
 ```sh
-gh issue create -R mksglu/context-mode --title "<check id or error code>: <short summary>" --label bug --body-file body.md
+gh issue create -R PedroHenriqueNS/context-mode-plus --title "<check id or error code>: <short summary>" --label bug --body-file body.md
 ```
 
 ## 7. After you send it
 
-The intake check comments within a minute, once per issue, and edits that same comment on each later edit. When its checklist lists missing items, fix the file and run `gh issue edit <n> -R mksglu/context-mode --body-file body.md`. The label moves to `repro-ready` when the body holds the version, the steps and the output. Issue state stays with the maintainer. This repo takes issues and keeps pull requests closed.
+The intake check comments within a minute, once per issue, and edits that same comment on each later edit. When its checklist lists missing items, fix the file and run `gh issue edit <n> -R PedroHenriqueNS/context-mode-plus --body-file body.md`. The label moves to `repro-ready` when the body holds the version, the steps and the output. Issue state stays with the maintainer. This repo takes issues and keeps pull requests closed.

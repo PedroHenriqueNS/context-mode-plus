@@ -13,7 +13,7 @@ import { tmpdir } from "node:os";
 import path, { join, resolve } from "node:path";
 import { hostBin, runSetup } from "../src/setup/index.ts";
 import { spawnForm, whichBin } from "../src/setup/spawn-bin.ts";
-import { TOOL_ORDER } from "../src/core/contracts/constants.ts";
+import { CLAUDE_MARKETPLACE_NAME, TOOL_ORDER } from "../src/core/contracts/constants.ts";
 import { generateManifests } from "../build/manifests.ts";
 import { listCopilotHooks } from "../src/setup/copilot-hooks.ts";
 
@@ -32,7 +32,7 @@ describe("ADR-0020 fire, hook-config hosts", { concurrency: CONC }, () => {
     const CLAUDE = hostBin("claude", process.env).file;
     const has = CLAUDE !== undefined && spawnSync(CLAUDE, ["--version"], { stdio: "ignore" }).status === 0;
     const LOG_BYTES = 200_000;
-    const PLUGIN = "context-mode@context-mode";
+    const PLUGIN = `context-mode@${CLAUDE_MARKETPLACE_NAME}`; // context-mode-plus: the marketplace the build names
 
     const ev = (type, o) => `event: ${type}\ndata: ${JSON.stringify({ type, ...o })}\n\n`;
     /** Answers the main request with one Bash tool call, then with a final text. Keeps the tool_result text it was sent. */

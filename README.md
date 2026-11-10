@@ -1,7 +1,5 @@
 # Context Mode
 
-> **context-mode-plus is a fork of [mksglu/context-mode](https://github.com/mksglu/context-mode)** (2.x) by Mert Koseoğlu, maintained at [PedroHenriqueNS/context-mode-plus](https://github.com/PedroHenriqueNS/context-mode-plus). It is an independent, unofficial fork, not affiliated with or endorsed by the original author. It keeps the original [Elastic License 2.0](LICENSE) and copyright notices, and it is not offered as a hosted or managed service. Claude Code install: `claude plugin marketplace add PedroHenriqueNS/context-mode-plus`, then `claude plugin install context-mode@context-mode-plus`. Fork details: [docs/fork/](docs/fork/).
-
 **A free, local plugin for 10 coding agents. It keeps tool output out of your agent's context window and keeps all usage data on your machine. The plugin is free forever.**
 
 [![npm downloads](https://img.shields.io/npm/dt/context-mode?label=npm%20downloads)](https://www.npmjs.com/package/context-mode) [![GitHub stars](https://img.shields.io/github/stars/mksglu/context-mode?style=flat&color=yellow)](https://github.com/mksglu/context-mode) [![Discord](https://img.shields.io/discord/1478479412700909750?label=Discord&logo=discord&color=5865f2)](https://discord.gg/DCN9jUgN5v) [![License: ELv2](https://img.shields.io/badge/License-ELv2-blue.svg)](LICENSE)
@@ -62,13 +60,13 @@ Claude Code, Codex, Gemini CLI and Qwen Code install from GitHub, and each of th
 <details id="install-claude-code"><summary><b>Claude Code</b></summary>
 
 ```sh
-claude plugin marketplace add mksglu/context-mode
-claude plugin install context-mode@context-mode
+claude plugin marketplace add PedroHenriqueNS/context-mode-plus
+claude plugin install context-mode@context-mode-plus
 ```
 
 ```sh
 # update
-claude plugin update context-mode@context-mode
+claude plugin update context-mode@context-mode-plus
 # check
 claude plugin list
 # remove
@@ -678,3 +676,7 @@ We chose ELv2 so the source stays open to all and the hosted service stays with 
 Report a defect on [Discord](https://discord.gg/DCN9jUgN5v) with the full `/ctx-doctor` report, and send ideas there too. The maintainer writes every change; [CONTRIBUTING.md](CONTRIBUTING.md) shows how an agent files an issue.
 
 **Videos.** [Better Stack on Context Mode](https://www.youtube.com/watch?v=QUHrntlfPo4). Make your own video and share it on [Discord](https://discord.gg/DCN9jUgN5v); we add videos over 10K views here.
+
+## About this fork
+
+This repository is an independent fork of the upstream project at `github.com/mksglu/context-mode` (2.x) by Mert Koseoğlu, maintained at `github.com/PedroHenriqueNS/context-mode-plus` and unaffiliated with the original author. It keeps the original [Elastic License 2.0](LICENSE) and copyright notices. Claude Code install: `claude plugin marketplace add PedroHenriqueNS/context-mode-plus`, then `claude plugin install context-mode@context-mode-plus`. Fork notes: `docs/fork/README.md`.

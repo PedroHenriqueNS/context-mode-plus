@@ -5,9 +5,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        AI agent: follow these rules in order. The full guide with a filled example: https://github.com/mksglu/context-mode/blob/main/.github/AGENT_ISSUE.md
+        AI agent: follow these rules in order. The full guide with a filled example: https://github.com/PedroHenriqueNS/context-mode-plus/blob/main/.github/AGENT_ISSUE.md
 
-        1. Search for the same problem first: `gh issue list -R mksglu/context-mode --state all --search "<check id or error>"`. When one matches, add your facts there as a comment.
+        1. Search for the same problem first: `gh issue list -R PedroHenriqueNS/context-mode-plus --state all --search "<check id or error>"`. When one matches, add your facts there as a comment.
         2. File one bug per issue.
         3. Call the `ctx_doctor` tool and paste its full output unchanged in the `ctx-report` field.
         4. Give the versions: context-mode, the agent, the OS and arch, and Node.

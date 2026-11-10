@@ -1377,3 +1377,41 @@ describe("ADR-0007: project dir cases ported from v1", () => {
     assert.match(out.trim(), /^[0-9a-f]{16}$/);
   });
 });
+
+// context-mode-plus: the fork installs, updates and reports issues as PedroHenriqueNS/context-mode-plus,
+// marketplace "context-mode-plus", plugin key context-mode@context-mode-plus. Tool names stay upstream's.
+describe("context-mode-plus identity", { concurrency: CONC }, () => {
+  const SLUG = "PedroHenriqueNS/context-mode-plus";
+
+  test("plus identity: marketplace, release repo and issue repo are the fork's", async () => {
+    const C = await import("../src/core/contracts/constants.ts");
+    const { TOOL_NAME_PREFIX } = await import("../src/adapters/claude-code.ts");
+    const { ISSUE_REPO } = await import("../src/cli/commands.ts");
+    assert.equal(C.CLAUDE_MARKETPLACE_NAME, "context-mode-plus");
+    assert.equal(C.PLUGIN_MARKETPLACE_NAME, "context-mode"); // codex and zcode keep upstream ids
+    assert.equal(C.RELEASE_REPO_URL, `https://github.com/${SLUG}.git`);
+    assert.equal(C.ISSUE_REPO_SLUG, SLUG);
+    assert.equal(ISSUE_REPO, SLUG);
+    assert.equal(C.SERVER_KEY, "context-mode"); // tool names depend on it
+    assert.equal(TOOL_NAME_PREFIX, "mcp__plugin_context-mode_context-mode__");
+  });
+
+  test("plus identity: Claude Code install and update commands name the fork", async () => {
+    const C = await import("../src/core/contracts/constants.ts");
+    assert.deepEqual(C.NATIVE_INSTALL["claude-code"], [
+      `claude plugin marketplace add ${SLUG}`, "claude plugin install context-mode@context-mode-plus",
+    ]);
+    assert.equal(C.UPGRADE_HOST_COMMAND["claude-code"],
+      "claude plugin marketplace update context-mode-plus && claude plugin update context-mode@context-mode-plus");
+  });
+
+  test("plus identity: the built Claude Code marketplace is named context-mode-plus", async (t) => {
+    const { generateManifests } = await import("../build/manifests.ts");
+    const out = mkdtempSync(path.join(tmpdir(), "plus-identity-"));
+    t.after(() => rmSync(out, { recursive: true, force: true }));
+    generateManifests(out, "2.1.7-plus.1");
+    const m = JSON.parse(readFileSync(path.join(out, ".claude-plugin", "marketplace.json"), "utf8"));
+    assert.equal(m.name, "context-mode-plus");
+    assert.equal(m.plugins[0].name, "context-mode");
+  });
+});

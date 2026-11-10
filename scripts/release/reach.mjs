@@ -46,7 +46,8 @@ const NPM_GLOBAL = "npm i -g ";
 const ROWS = agentRows();
 const ROW_BY_ID = new Map(ROWS.map((r) => [r.id, r]));
 // GitHub agents: the install command names this repo (marketplace add, extensions install); the rest install from npm.
-const GITHUB_AGENTS = Object.freeze(AGENT_IDS.filter((id) => (ROW_BY_ID.get(id)?.cmds.install ?? []).some((c) => c.includes(ISSUE_REPO_SLUG))));
+const GITHUB_AGENTS = Object.freeze(AGENT_IDS.filter((id) => (ROW_BY_ID.get(id)?.cmds.install ?? []).some((c) => [ISSUE_REPO_SLUG, "mksglu/context-mode"].some((slug) => c.includes(slug)))));
+// context-mode-plus: Claude Code installs from the fork repo; the other GitHub agents still name upstream's.
 const PACKAGE_HOOKS = new Map(ADAPTERS.filter((a) => a.hookChannel.kind === "package").map((a) => [a.hookChannel.path, a.id]));
 
 function agentOfName(base) {

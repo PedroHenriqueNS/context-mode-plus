@@ -458,7 +458,7 @@ describe("ADR-0019 cli", () => {
       assert.ok(!report.includes(s.home), "home dir is redacted");
       assert.match(report, /fingerprint: [0-9a-f]{12}/);
       assert.match(report, /codex/);
-      assert.match(r.stderr, /gh issue create --repo mksglu\/context-mode/);
+      assert.match(r.stderr, /gh issue create --repo PedroHenriqueNS\/context-mode-plus/);
     });
 
     test("[M7] cli/report-server-closes-stdin: a server that closes its input is a FAIL row with a report, not a crash (D-CLI-EPIPE-1)", (t) => {
@@ -472,7 +472,7 @@ describe("ADR-0019 cli", () => {
         // POSIX: closeSync(0) closes the read end for certain, so the CLI write is an EPIPE. Windows keeps the pipe: it times out.
         if (process.platform !== "win32") assert.match(r.stderr, /mcp: server closed its input/, r.stderr);
         assert.match(r.stderr, /Debug report \(redacted\)/, r.stderr);
-        assert.match(r.stderr, /gh issue create --repo mksglu\/context-mode/);
+        assert.match(r.stderr, /gh issue create --repo PedroHenriqueNS\/context-mode-plus/);
         assert.ok(readdirSync(path.join(s.home, ".context-mode", "reports")).length >= 1);
       }
     });
@@ -514,7 +514,7 @@ describe("ADR-0019 cli", () => {
       assert.ok(!existsSync(s.env.LOG) || !readFileSync(s.env.LOG, "utf8").includes("issue create"));
       const yes = pty(s, ["setup", "--agents", "codex"], [{ expect: "Apply", send: "y" }, { expect: "Open an issue", send: "y" }], { env: { CM_FAKE_BROKEN: "1" } });
       assert.equal(yes.code, 1, yes.out);
-      assert.match(readFileSync(s.env.LOG, "utf8"), /gh issue create --repo mksglu\/context-mode/);
+      assert.match(readFileSync(s.env.LOG, "utf8"), /gh issue create --repo PedroHenriqueNS\/context-mode-plus/);
     });
 
     test("[M7] cli/pty-ctrl-c: Ctrl-C mid-apply exits 130 and leaves files byte-identical or fully applied", { skip: !hasPython }, (t) => {

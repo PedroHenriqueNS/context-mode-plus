@@ -13,7 +13,7 @@ import { assertOutPackageJson, buildMatcher, generateManifests } from "../build/
 import { FATAL_VALUE, PROMPT, childEnv, fatalLog, scoreArm } from "../e2e/live/npm-package/claude-code.mjs";
 import { isReleaseVersion } from "../scripts/release/release-tags.mjs";
 import { ADAPTERS, getAdapter } from "../src/adapters/table.ts";
-import { COMPACT_POINTER_LINE, NODE_MIN, SERVER_KEY, TOOL_ORDER, prefixToolNames } from "../src/core/contracts/constants.ts";
+import { CLAUDE_MARKETPLACE_NAME, COMPACT_POINTER_LINE, FORK_REPO_SLUG, NODE_MIN, RELEASE_REPO_URL, SERVER_KEY, TOOL_ORDER, prefixToolNames } from "../src/core/contracts/constants.ts";
 import { composeMatcher } from "../src/core/ops/doctor-config.ts";
 import { denyMessage } from "../src/core/policy/decide.ts";
 import { buildRegistry, renderSkill } from "../src/setup/registry.ts";
@@ -356,7 +356,7 @@ describe("ADR-0018 build: manifests", () => {
     });
     // D-INST-3: `claude plugin marketplace add <package dir>` (what setup runs) needs this file in the npm package.
     assert.deepEqual(readJson(dir, ".claude-plugin/marketplace.json"), {
-      description: DEV.description, name: "context-mode", owner: { name: "context-mode" }, plugins: [{ author: AUTHOR, description: DEV.description, name: "context-mode", source: "./", version: "0.0.0-dev" }],
+      description: DEV.description, name: CLAUDE_MARKETPLACE_NAME, owner: { name: CLAUDE_MARKETPLACE_NAME }, plugins: [{ author: AUTHOR, description: DEV.description, name: "context-mode", source: "./", version: "0.0.0-dev" }],
     });
     // D-FU-RM-GEMINI-1: Gemini expands ${extensionPath} and ${/} in the manifest and reads hooks only from <ext>/hooks/hooks.json.
     const geminiEntry = { "context-mode": { command: "node", args: ["${extensionPath}${/}server.mjs", "--agent", "gemini"] } };
@@ -457,7 +457,7 @@ describe("ADR-0018 build: manifests", () => {
       main: "./opencode/plugin.js", // ADR-0023 D-NI-OPENCODE-1
       name: "context-mode",
       pi: { extensions: ["./pi/index.js"], skills: ["./pi/skills"] },
-      repository: { type: "git", url: "git+https://github.com/mksglu/context-mode.git" },
+      repository: { type: "git", url: `git+${RELEASE_REPO_URL}` },
       type: "module",
       version: "2.0.0",
     });
@@ -469,7 +469,7 @@ describe("ADR-0018 build: manifests", () => {
       ...META,
       name: "context-mode", version: "2.0.0", type: "module", bin: { "context-mode": "cli.mjs" }, engines: { node: ">=24.15.0" },
       files: D1_FILES, main: "./opencode/plugin.js", exports: { ".": "./opencode/plugin.js", "./server": "./opencode/plugin.js" }, pi: { extensions: ["./pi/index.js"], skills: ["./pi/skills"] },
-      repository: { type: "git", url: "git+https://github.com/mksglu/context-mode.git" },
+      repository: { type: "git", url: `git+${RELEASE_REPO_URL}` },
     };
     assert.doesNotThrow(() => assertOutPackageJson(ok));
     assert.throws(() => assertOutPackageJson({ ...ok, dependencies: { "better-sqlite3": "1.0.0" } }), /dependencies/);
@@ -483,7 +483,7 @@ describe("ADR-0018 build: manifests", () => {
     assert.throws(() => assertOutPackageJson({ ...ok, pi: { extensions: ["./pi/index.js"], skills: ["./pi/skills"], prompts: [] } }), /pi/);
     // D-RN-REPO-1: npm provenance (E422) needs repository.url to name the source repo; npm pkg fix form, so it stays a no-op.
     assert.throws(() => assertOutPackageJson({ ...ok, repository: { type: "git", url: "" } }), /repository/);
-    assert.throws(() => assertOutPackageJson({ ...ok, repository: { type: "git", url: "https://github.com/mksglu/context-mode" } }), /repository/);
+    assert.throws(() => assertOutPackageJson({ ...ok, repository: { type: "git", url: `https://github.com/${FORK_REPO_SLUG}` } }), /repository/);
     for (const key of ["description", "keywords", "license", "homepage", "bugs"]) { // D-PKG-META-1: must equal the repo package.json
       assert.throws(() => assertOutPackageJson({ ...ok, [key]: "x" }), new RegExp(key));
     }
@@ -547,9 +547,9 @@ describe("ADR-0018 build: package metadata and dependency use", () => {
   });
 
   test("package-meta: homepage, repository, bugs name this repo in npm-normal form", () => {
-    assert.equal(pkg.homepage, "https://github.com/mksglu/context-mode#readme");
-    assert.deepEqual(pkg.repository, { type: "git", url: "git+https://github.com/mksglu/context-mode.git" });
-    assert.deepEqual(pkg.bugs, { url: "https://github.com/mksglu/context-mode/issues" });
+    assert.equal(pkg.homepage, `https://github.com/${FORK_REPO_SLUG}#readme`);
+    assert.deepEqual(pkg.repository, { type: "git", url: `git+${RELEASE_REPO_URL}` });
+    assert.deepEqual(pkg.bugs, { url: `https://github.com/${FORK_REPO_SLUG}/issues` });
   });
 
   test("package-meta: release package.json carries the dev package.json fields, never a hand copy", (t) => {
@@ -853,7 +853,7 @@ describe("ADR-0019 build: npm package", () => {
       main: "./opencode/plugin.js", // ADR-0023 D-NI-OPENCODE-1: OpenCode imports the plugin by package name
       name: "context-mode",
       pi: { extensions: ["./pi/index.js"], skills: ["./pi/skills"] },
-      repository: { type: "git", url: "git+https://github.com/mksglu/context-mode.git" }, // D-RN-REPO-1
+      repository: { type: "git", url: `git+${RELEASE_REPO_URL}` }, // D-RN-REPO-1
       type: "module",
       version: "2.0.0",
     });
@@ -1191,11 +1191,11 @@ describe("ADR-0023 build: native host manifests", () => {
 
   test("[ADR-0023] native/claude-code-main: main tree marketplace points at plugins/claude-code, which holds the full plugin", () => {
     const mk = json(main, ".claude-plugin/marketplace.json");
-    assert.equal(mk.name, "context-mode");
+    assert.equal(mk.name, CLAUDE_MARKETPLACE_NAME);
     assert.equal(typeof mk.owner.name, "string");
     assert.equal(mk.plugins.length, 1);
     const [entry] = mk.plugins;
-    assert.equal(entry.name, "context-mode", "entry name equals plugin.json name (/plugin install context-mode@context-mode)");
+    assert.equal(entry.name, "context-mode", "entry name equals plugin.json name (/plugin install context-mode@context-mode-plus)");
     assert.equal(entry.source, "./plugins/claude-code");
     assert.equal(entry.version, VERSION);
     const root = path.join(main, "plugins", "claude-code");
@@ -1293,7 +1293,7 @@ describe("ADR-0023 build: hook templates in docs", () => {
 
   test("claude-code guide states the native marketplace command (ADR-0023) and the claude mcp add limit", () => {
     const guide = read("docs/install/claude-code.md");
-    assert.match(guide, /claude plugin marketplace add mksglu\/context-mode/, "guide: no native marketplace command");
+    assert.match(guide, /claude plugin marketplace add PedroHenriqueNS\/context-mode-plus/, "guide: no native marketplace command");
     assert.match(guide, /claude mcp add/, "guide: no claude mcp add limit");
   });
 });
