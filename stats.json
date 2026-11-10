@@ -1,8 +1,5 @@
 {
-  "schemaVersion": 1,
-  "label": "users",
-  "message": "687.9k+",
-  "color": "brightgreen",
-  "npm": "633.6k+",
-  "marketplace": "54.3k+"
+  "npm_downloads": 683261,
+  "stars": 33070,
+  "read_at": "2026-11-01"
 }
