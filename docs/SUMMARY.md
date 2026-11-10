@@ -1,17 +1,17 @@
 # Summary
 
-context-mode-plus is a public fork of [mksglu/context-mode](https://github.com/mksglu/context-mode) — an MCP server and Claude Code hook set that keeps large tool outputs out of the model's context by running code in a sandbox and indexing results in SQLite FTS5. The fork tunes it for one heavy Claude Code setup (many plugins, RTK, custom rules files): it injects the user's own rules once, injects into subagents only when they can use `ctx_*`, nudges after the fact instead of once per session, cooperates with RTK 1.0.x, and stops echoing back text the model already has. It stays a patch fork: upstream's structure and its 12 platform adapters are kept, so upstream fixes can still be merged.
+context-mode-plus is a public fork of [mksglu/context-mode](https://github.com/mksglu/context-mode) — a plugin that keeps large tool outputs out of a coding agent's context by running code in a sandbox and indexing results in SQLite FTS5. Since `2.1.7-plus.1` it is upstream's 2.x tree (a full rewrite) with the smallest diff that gives it its own identity: Claude Code installs `context-mode@context-mode-plus` from this repo, and updates, release tags and issue reports point here. On top of that it returns the newest entries from a `ctx_search` timeline and runs its gate away from the real `~/.claude`.
 
 ## Current status
 
-- Released: `1.0.169-plus.3` (2026-10-16), installed as `context-mode@context-mode-plus` from this repo's own marketplace.
-- Verified live in real sessions: rules injection, no code echo, Read/Bash nudges, subagent rules injection, `ctx_doctor` RTK line, recent-first `ctx_search` timeline.
-- Full suite green (221 files, ~4.8k tests).
+- Released: `2.1.7-plus.1` (2026-11-10), based on upstream `v2.1.7`. The 1.x line ended at `1.0.169-plus.3`.
+- Gate: 2,844 unit tests pass; the two Claude Code release-smoke cases fail on a machine with `claude` installed, as they do upstream. e2e: one case (`GP1/opencode-clientinfo-detect`) fails, reported as failing on upstream too. The paid live layer was not run.
+- The owner's rules file reaches Claude Code through `@context-mode-usage.md` in `~/.claude/CLAUDE.md`, not through the plugin.
 
 ## Top priorities
 
-1. RTK stage 2: enable `rtk:posthook` after a week of `rtk gain` baseline (~2026-10-23) — see [ROADMAP.md](ROADMAP.md).
-2. Fix the misleading `"current-session"` label on persistent content-store results (planned `plus.4`).
-3. Session-data retention (VACUUM + age cap) so `~/.claude/context-mode` stops growing.
+1. Install `2.1.7-plus.1` from this repo and confirm `/ctx-doctor` in a real session.
+2. Events journal retention (2.x never prunes it) — see [ROADMAP.md](ROADMAP.md).
+3. A cadence for merging upstream 2.x releases.
 
-Product goals and constraints: [PRD.md](PRD.md). Feature list: [FEATURES.md](FEATURES.md).
+Product goals and constraints: [PRD.md](PRD.md). Fork identity: [fork/README.md](fork/README.md).

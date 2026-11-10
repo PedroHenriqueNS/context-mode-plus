@@ -3,7 +3,7 @@
     "context-mode": "cli.mjs"
   },
   "bugs": {
-    "url": "https://github.com/mksglu/context-mode/issues"
+    "url": "https://github.com/PedroHenriqueNS/context-mode-plus/issues"
   },
   "description": "Context window saver for 10 coding agents. Local and free: sandboxed code execution, FTS5 search, session continuity.",
   "engines": {
@@ -35,7 +35,7 @@
     "server.mjs",
     "skills"
   ],
-  "homepage": "https://github.com/mksglu/context-mode#readme",
+  "homepage": "https://github.com/PedroHenriqueNS/context-mode-plus#readme",
   "keywords": [
     "claude-code",
     "codex",
@@ -66,8 +66,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mksglu/context-mode.git"
+    "url": "git+https://github.com/PedroHenriqueNS/context-mode-plus.git"
   },
   "type": "module",
-  "version": "2.1.7"
+  "version": "2.1.7-plus.1"
 }

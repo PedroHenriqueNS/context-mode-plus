@@ -1,19 +1,19 @@
 {
   "description": "Context window saver for 10 coding agents. Local and free: sandboxed code execution, FTS5 search, session continuity.",
-  "name": "context-mode",
+  "name": "context-mode-plus",
   "owner": {
-    "name": "context-mode"
+    "name": "context-mode-plus"
   },
   "plugins": [
     {
       "author": {
         "name": "Mert Koseoglu",
-        "url": "https://github.com/mksglu/context-mode#readme"
+        "url": "https://github.com/PedroHenriqueNS/context-mode-plus#readme"
       },
       "description": "Context window saver for 10 coding agents. Local and free: sandboxed code execution, FTS5 search, session continuity.",
       "name": "context-mode",
       "source": "./plugins/claude-code",
-      "version": "2.1.7",
+      "version": "2.1.7-plus.1",
       "keywords": [
         "claude-code",
         "codex",
@@ -34,6 +34,6 @@
     }
   ],
   "metadata": {
-    "version": "2.1.7"
+    "version": "2.1.7-plus.1"
   }
 }

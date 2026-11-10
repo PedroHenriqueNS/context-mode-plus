@@ -467,8 +467,9 @@ var DECISION_TOOL = "AskUserQuestion";
 var DECISION_ANSWERS_KEY = "answers";
 var DECISION_OPTION_KEY = "option";
 var DECISION_LABEL_JOIN = " | ";
-var RELEASE_REPO_URL = "https://github.com/mksglu/context-mode.git";
-var BUNDLE_SHA = true ? "5539b632975049a99de986448417a10bd246e506" : void 0;
+var FORK_REPO_SLUG = "PedroHenriqueNS/context-mode-plus";
+var RELEASE_REPO_URL = `https://github.com/${FORK_REPO_SLUG}.git`;
+var BUNDLE_SHA = true ? "c744c2a0b76c9b90b259433fbffe34a1285e60ac" : void 0;
 var DOCTOR_CHECK_ORDER = Object.freeze(["D1", "D2", "D3", "D4", "D5", "D5b", "D6", "D7", "D8", "D9", "D10", "D11"]);
 var DOCTOR_LABEL = Object.freeze({
   D1: "version",
@@ -607,6 +608,7 @@ function D9_INDEX_DETAIL(sources, chunks) {
   return `${sources} sources, ${chunks} chunks indexed`;
 }
 var PLUGIN_CACHE_DIR_NAME = "cache";
+var CLAUDE_MARKETPLACE_NAME = "context-mode-plus";
 var DATA_PLUGINS_DIR_NAME = "plugins";
 var PLUGIN_CURRENT_LINK = "current";
 var EXTENSIONS_DIR_NAME = "extensions";
@@ -841,7 +843,7 @@ var HEAL_TS_SEP = ".";
 var OWNER_STOP_EXT = ".stop";
 var UPGRADE_DATA_DELETED = "user data deleted";
 var UPGRADE_HOST_COMMAND = Object.freeze({
-  "claude-code": "claude plugin marketplace update context-mode && claude plugin update context-mode@context-mode",
+  "claude-code": `claude plugin marketplace update ${CLAUDE_MARKETPLACE_NAME} && claude plugin update context-mode@${CLAUDE_MARKETPLACE_NAME}`,
   codex: "codex plugin marketplace upgrade context-mode",
   gemini: "gemini extensions update context-mode",
   qwen: "qwen extensions update context-mode",
@@ -1042,11 +1044,11 @@ var DOCTOR_NOTE_PREFIXES = Object.freeze([
   DOCTOR_URL_LINE,
   DOCTOR_RULES_LINE
 ]);
-var ISSUE_REPO_SLUG = "mksglu/context-mode";
+var ISSUE_REPO_SLUG = FORK_REPO_SLUG;
 var ISSUE_FORM_FILE = "agent-report.yml";
 var ISSUE_GUIDE_URL = `https://github.com/${ISSUE_REPO_SLUG}/blob/main/.github/AGENT_ISSUE.md`;
 var ISSUE_AGENT_RULES = Object.freeze([
-  'Search for the same problem first: `gh issue list -R mksglu/context-mode --state all --search "<check id or error>"`. When one matches, add your facts there as a comment.',
+  'Search for the same problem first: `gh issue list -R PedroHenriqueNS/context-mode-plus --state all --search "<check id or error>"`. When one matches, add your facts there as a comment.',
   "File one bug per issue.",
   "Call the `ctx_doctor` tool and paste its full output unchanged in the `ctx-report` field.",
   "Give the versions: context-mode, the agent, the OS and arch, and Node.",
@@ -1086,7 +1088,7 @@ var DOCTOR_PATH_TOOLS = Object.freeze(["node", "git", "sh"]);
 var DOCTOR_SECRET_WORDS = Object.freeze(["token", "secret", "password", "apikey", "api_key", "authorization", "bearer"]);
 var DOCTOR_MASK = "<masked>";
 var NATIVE_INSTALL = Object.freeze({
-  "claude-code": ["claude plugin marketplace add mksglu/context-mode", "claude plugin install context-mode@context-mode"],
+  "claude-code": [`claude plugin marketplace add ${FORK_REPO_SLUG}`, `claude plugin install context-mode@${CLAUDE_MARKETPLACE_NAME}`],
   codex: ["codex plugin marketplace add mksglu/context-mode", "codex plugin add context-mode@context-mode"],
   gemini: ["gemini extensions install https://github.com/mksglu/context-mode"],
   qwen: ["qwen extensions install https://github.com/mksglu/context-mode:context-mode"],
@@ -7537,16 +7539,17 @@ function highlight(row5, terms, maxBytes = SNIPPET_MAX_BYTES) {
 var TL_SCOPE = `
     AND (:scope <> 'session' OR session_id = :session_id)
     AND (:scope <> 'worktree' OR worktree = :worktree)`;
-var TL_EVENTS = `
+var tlWindow = (cte, ts, id2, newest) => newest ? `${ts} >= IFNULL((SELECT ${ts} FROM ${cte} ORDER BY ${ts} DESC, ${id2} DESC LIMIT 1 OFFSET :off), ${ts})` : `${ts} <= IFNULL((SELECT ${ts} FROM ${cte} ORDER BY ${ts}, ${id2} LIMIT 1 OFFSET :off), ${ts})`;
+var tlEvents = (newest) => `
 WITH e AS (
   SELECT seq, kind, key, path, body, created_at FROM events
   WHERE created_at > :after${TL_SCOPE}
     AND (:source IS NULL OR kind = :source)
 )
 SELECT seq, kind, key, path, body, created_at FROM e
-WHERE created_at <= IFNULL((SELECT created_at FROM e ORDER BY created_at, seq LIMIT 1 OFFSET :off), created_at)
+WHERE ${tlWindow("e", "created_at", "seq", newest)}
 ORDER BY created_at ASC, seq ASC`;
-var TL_SOURCES = `
+var tlSources = (newest) => `
 WITH s AS (
   SELECT id, label, created_ts FROM sources
   WHERE created_ts > :after${TL_SCOPE}
@@ -7554,7 +7557,7 @@ WITH s AS (
     AND label <> :reserved
 )
 SELECT id, label, created_ts FROM s
-WHERE created_ts <= IFNULL((SELECT created_ts FROM s ORDER BY created_ts, id LIMIT 1 OFFSET :off), created_ts)
+WHERE ${tlWindow("s", "created_ts", "id", newest)}
 ORDER BY created_ts ASC, id ASC`;
 var TL_FIRST_CHUNK = `
 SELECT source_id, body FROM chunks WHERE ord = 0 AND source_id IN (SELECT value FROM json_each(:ids))`;
@@ -7580,11 +7583,12 @@ function ftsQueryTimeline(db, scope, ctx, sessionId, limit, after, source, memor
     worktree: ctx.worktree,
     source: source ?? null
   };
+  const newest = after === null;
   const from = after ?? -1;
   const reserved = DECISION_SOURCE;
   const off = limit - 1;
   const merged = [];
-  for (const e of db.raw.prepare(TL_EVENTS).all({ ...filter2, after: from, off })) {
+  for (const e of db.raw.prepare(tlEvents(newest)).all({ ...filter2, after: from, off })) {
     merged.push({
       origin: "session",
       ts: Number(e.created_at),
@@ -7595,7 +7599,7 @@ function ftsQueryTimeline(db, scope, ctx, sessionId, limit, after, source, memor
       text: e.body ?? e.key ?? e.path ?? ""
     });
   }
-  const srcRows = db.raw.prepare(TL_SOURCES).all({ ...filter2, after: from, off, reserved });
+  const srcRows = db.raw.prepare(tlSources(newest)).all({ ...filter2, after: from, off, reserved });
   if (srcRows.length > 0) {
     const bodies = /* @__PURE__ */ new Map();
     const ids = JSON.stringify(srcRows.map((r) => Number(r.id)));
@@ -7611,6 +7615,11 @@ function ftsQueryTimeline(db, scope, ctx, sessionId, limit, after, source, memor
     if (m.ts > from && (source === void 0 || m.label === source || MEMORY_LABEL_PREFIX + m.label === source)) merged.push(m);
   }
   merged.sort(timelineOrder);
+  if (newest) {
+    let start = Math.max(0, merged.length - limit);
+    while (start > 0 && merged[start - 1].ts === merged[start].ts) start--;
+    return { rows: merged.slice(start), more: false };
+  }
   let end = Math.min(limit, merged.length);
   if (end > 0) {
     const last2 = merged[end - 1].ts;

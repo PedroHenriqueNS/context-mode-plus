@@ -1,5 +1,14 @@
 # Changelog (context-mode-plus)
 
+## 2.1.7-plus.1 — 2026-11-10
+
+- Nova base: upstream context-mode 2.1.7, reescrita completa (Node 24.15+, `node:sqlite`, ferramentas `ctx_execute`, `ctx_batch`, `ctx_index`, `ctx_search`, `ctx_resume`, …). As mudanças do fork 1.x foram descartadas: a 2.x já cobre o eco de código e a deduplicação em lote, e torna desnecessários os lembretes, o filtro de subagentes, o reparo do registro e o adiamento do Bash ao RTK.
+- Identidade do fork no Claude Code: `context-mode@context-mode-plus` do marketplace `context-mode-plus`; `ctx_upgrade` e o doctor mostram o comando de atualização do fork; o doctor (D1) lê as tags de release deste repositório; relatórios de problema vão para `PedroHenriqueNS/context-mode-plus`.
+- `ctx_search` com `sort: "timeline"` e sem cursor devolve a página mais recente (a 2.x devolvia a mais antiga).
+- O gate roda todas as camadas com `HOME` temporário e sem `CLAUDE_CONFIG_DIR`/`CONTEXT_MODE_DATA_DIR`; os testes unitários rodam por glob (Node 24.22).
+- Os workflows de release (npm), estatísticas, semanal e triagem de issues do upstream não rodam no fork.
+- Removida a seção RTK do doctor. As regras de `~/.claude/context-mode-usage.md` passam a vir de um `@import` no `~/.claude/CLAUDE.md`.
+
 ## 1.0.169-plus.3 — 2026-10-16
 
 - `ctx_search` com `sort: "timeline"` devolve as entradas mais recentes (em ordem cronológica); antes devolvia as mais antigas.

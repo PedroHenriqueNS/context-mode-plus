@@ -324,7 +324,8 @@ var STATS_WAYS = Object.freeze([
 ]);
 var STATS_INDEX_TOOLS = Object.freeze(["ctx_index", "ctx_search"]);
 var PURGE_SCOPES = Object.freeze(["session", "source", "project"]);
-var RELEASE_REPO_URL = "https://github.com/mksglu/context-mode.git";
+var FORK_REPO_SLUG = "PedroHenriqueNS/context-mode-plus";
+var RELEASE_REPO_URL = `https://github.com/${FORK_REPO_SLUG}.git`;
 var DOCTOR_CHECK_ORDER = Object.freeze(["D1", "D2", "D3", "D4", "D5", "D5b", "D6", "D7", "D8", "D9", "D10", "D11"]);
 var DOCTOR_LABEL = Object.freeze({
   D1: "version",
@@ -348,6 +349,7 @@ var RELEASE_TAG_PATTERN = "v*";
 var D1_GIT_CHECK_FIX = `git ls-remote --tags --refs ${RELEASE_REPO_URL} "${RELEASE_TAG_PATTERN}"`;
 var D2_NODE_FIX = `nvm install ${NODE_MIN.split(".")[0]}, or install it from https://nodejs.org`;
 var D3_PARTS = Object.freeze(["MCP entry", "hook entries", "hook timeout"]);
+var CLAUDE_MARKETPLACE_NAME = "context-mode-plus";
 var AGENT_HOME_DIR = Object.freeze({
   "claude-code": [".claude"],
   codex: [".codex"],
@@ -481,7 +483,7 @@ var KIRO_TOOL_MATCHERS = Object.freeze([["@mcp", "mcp"], ["shell", "shell"]]);
 var CODEX_FEATURES_HOOKS_KEY = Object.freeze(["features", "hooks"]);
 var DB_SIBLING_SUFFIXES = Object.freeze(["", DB_WAL_SUFFIX, DB_SHM_SUFFIX]);
 var UPGRADE_HOST_COMMAND = Object.freeze({
-  "claude-code": "claude plugin marketplace update context-mode && claude plugin update context-mode@context-mode",
+  "claude-code": `claude plugin marketplace update ${CLAUDE_MARKETPLACE_NAME} && claude plugin update context-mode@${CLAUDE_MARKETPLACE_NAME}`,
   codex: "codex plugin marketplace upgrade context-mode",
   gemini: "gemini extensions update context-mode",
   qwen: "qwen extensions update context-mode",
@@ -598,11 +600,11 @@ var DOCTOR_NOTE_PREFIXES = Object.freeze([
   DOCTOR_URL_LINE,
   DOCTOR_RULES_LINE
 ]);
-var ISSUE_REPO_SLUG = "mksglu/context-mode";
+var ISSUE_REPO_SLUG = FORK_REPO_SLUG;
 var ISSUE_FORM_FILE = "agent-report.yml";
 var ISSUE_GUIDE_URL = `https://github.com/${ISSUE_REPO_SLUG}/blob/main/.github/AGENT_ISSUE.md`;
 var ISSUE_AGENT_RULES = Object.freeze([
-  'Search for the same problem first: `gh issue list -R mksglu/context-mode --state all --search "<check id or error>"`. When one matches, add your facts there as a comment.',
+  'Search for the same problem first: `gh issue list -R PedroHenriqueNS/context-mode-plus --state all --search "<check id or error>"`. When one matches, add your facts there as a comment.',
   "File one bug per issue.",
   "Call the `ctx_doctor` tool and paste its full output unchanged in the `ctx-report` field.",
   "Give the versions: context-mode, the agent, the OS and arch, and Node.",
@@ -637,7 +639,7 @@ var DOCTOR_ENV_NAMES = Object.freeze([
 var DOCTOR_PATH_TOOLS = Object.freeze(["node", "git", "sh"]);
 var DOCTOR_SECRET_WORDS = Object.freeze(["token", "secret", "password", "apikey", "api_key", "authorization", "bearer"]);
 var NATIVE_INSTALL = Object.freeze({
-  "claude-code": ["claude plugin marketplace add mksglu/context-mode", "claude plugin install context-mode@context-mode"],
+  "claude-code": [`claude plugin marketplace add ${FORK_REPO_SLUG}`, `claude plugin install context-mode@${CLAUDE_MARKETPLACE_NAME}`],
   codex: ["codex plugin marketplace add mksglu/context-mode", "codex plugin add context-mode@context-mode"],
   gemini: ["gemini extensions install https://github.com/mksglu/context-mode"],
   qwen: ["qwen extensions install https://github.com/mksglu/context-mode:context-mode"],
@@ -3690,25 +3692,6 @@ function toMatchAny(q) {
 var TL_SCOPE = `
     AND (:scope <> 'session' OR session_id = :session_id)
     AND (:scope <> 'worktree' OR worktree = :worktree)`;
-var TL_EVENTS = `
-WITH e AS (
-  SELECT seq, kind, key, path, body, created_at FROM events
-  WHERE created_at > :after${TL_SCOPE}
-    AND (:source IS NULL OR kind = :source)
-)
-SELECT seq, kind, key, path, body, created_at FROM e
-WHERE created_at <= IFNULL((SELECT created_at FROM e ORDER BY created_at, seq LIMIT 1 OFFSET :off), created_at)
-ORDER BY created_at ASC, seq ASC`;
-var TL_SOURCES = `
-WITH s AS (
-  SELECT id, label, created_ts FROM sources
-  WHERE created_ts > :after${TL_SCOPE}
-    AND (:source IS NULL OR label = :source)
-    AND label <> :reserved
-)
-SELECT id, label, created_ts FROM s
-WHERE created_ts <= IFNULL((SELECT created_ts FROM s ORDER BY created_ts, id LIMIT 1 OFFSET :off), created_ts)
-ORDER BY created_ts ASC, id ASC`;
 var TL_MORE = `
 SELECT EXISTS(SELECT 1 FROM events WHERE created_at > :after${TL_SCOPE} AND (:source IS NULL OR kind = :source))
     OR EXISTS(SELECT 1 FROM sources WHERE created_ts > :after${TL_SCOPE} AND (:source IS NULL OR label = :source)
