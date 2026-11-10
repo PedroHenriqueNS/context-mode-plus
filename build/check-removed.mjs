@@ -149,6 +149,14 @@ const HELD_FOR_OWNER = [
 
 // ADR-0024: the unit tests sit flat in tests/ as *.test.mjs. A v1 file such as tests/hooks/x.test.ts is not one.
 // Literal compares only: starts with "tests/", ends with ".test.mjs", no second "/".
+// context-mode-plus: the fork's own living docs. Its root AGENTS.md and CLAUDE.md are project docs, not v1 routing files.
+const FORK_FILES = [
+  "AGENTS.md", "CLAUDE.md",
+  ...["ARCHITECTURE", "CONVENTIONS", "FEATURES", "PITFALLS", "PRD", "ROADMAP", "STACK", "SUMMARY"].map((n) => `docs/${n}.md`),
+];
+const FORK_DIRS = ["docs/fork/", "docs/superpowers/"];
+const isForkDoc = (p) => FORK_FILES.includes(p) || FORK_DIRS.some((d) => p.startsWith(d));
+
 function isFlatTest(p) {
   return p.startsWith("tests/") && p.endsWith(".test.mjs") && p.indexOf("/", "tests/".length) === -1;
 }
@@ -180,7 +188,7 @@ function check(repoRoot) {
   const found = [];
   const outside = [];
   for (const p of tracked) {
-    if (HELD_FOR_OWNER.includes(p)) continue;
+    if (HELD_FOR_OWNER.includes(p) || isForkDoc(p)) continue;
     const name = baseName(p);
     const removed =
       REMOVED_PATHS.some((e) => matchesRemoved(p, e)) ||
