@@ -1,5 +1,7 @@
 # Architecture
 
+> **Describes the 1.x fork (`1.0.169-plus.3`).** Since `2.1.7-plus.1` the code is upstream 2.x: see [architecture/](architecture/) and [how-it-works.md](how-it-works.md). The fork's 2.x changes are listed in [ROADMAP.md](ROADMAP.md#phase-2--rebase-on-upstream-2x--217-plus1-2026-11-10).
+
 context-mode is two cooperating halves that share on-disk SQLite databases:
 
 1. **The MCP server** (`start.mjs` → `server.bundle.mjs`, source `src/server.ts`) exposes the `ctx_*` tools: sandboxed execution, indexing, search, stats, doctor, upgrade, purge.

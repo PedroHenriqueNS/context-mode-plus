@@ -1,5 +1,7 @@
 # Product Requirements — context-mode-plus
 
+> Written for the 1.x fork. The goals stand on the 2.x base; how each feature fared is in [ROADMAP.md](ROADMAP.md#phase-2--rebase-on-upstream-2x--217-plus1-2026-11-10).
+
 ## Problem
 
 Upstream context-mode works, but in a setup with ~40 plugins, RTK and several global rules files it leaves measurable waste and friction (study of 30 days of transcripts, 2026-10-16):

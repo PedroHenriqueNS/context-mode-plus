@@ -1,6 +1,17 @@
 # Pitfalls
 
+> Entries dated before 2026-11-10 are about the 1.x fork; most no longer apply to the 2.x base (no bundles, no `start.mjs` heal, no `-plus.N` cache sort).
+
 Past failures and non-obvious constraints, newest first. Rules derived from them live in [CONVENTIONS.md](CONVENTIONS.md).
+
+### 2026-11-10 — The v2 gate cannot run `node --test tests/` on Node 24.22
+Node 24.22 reads a bare directory argument as a module path and fails before any test runs. `scripts/gate.mjs` passes `tests/*.test.mjs` instead.
+
+### 2026-11-10 — Renaming `PLUGIN_MARKETPLACE_NAME` breaks Codex and ZCode
+Their plugin ids come from marketplace files the fork does not rename, so they stay `context-mode@context-mode`. Only Claude Code uses `CLAUDE_MARKETPLACE_NAME`.
+
+### 2026-11-10 — v2 replaces large Read results, even before an Edit
+A whole-file Read over 4 KB comes back as a `ctx_search` pointer. Read with `offset`/`limit` to get the text whole (2.1.3), or raise `CTX_REPLACE_TRIGGER_BYTES`.
 
 ### 2026-10-16 — `/reload-plugins` does not restart the MCP server
 After installing a new version, `/reload-plugins` reloaded skills and hooks but the running MCP server process (started with the session) kept serving the old bundle. Hooks pick up a new version immediately (they are spawned per call); `ctx_*` tools do not until the session restarts. Verify a release in a **new** session, or by spawning the installed `start.mjs` directly.

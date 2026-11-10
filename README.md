@@ -1,5 +1,7 @@
 # Context Mode
 
+> **context-mode-plus is a fork of [mksglu/context-mode](https://github.com/mksglu/context-mode)** (2.x) by Mert Koseoğlu, maintained at [PedroHenriqueNS/context-mode-plus](https://github.com/PedroHenriqueNS/context-mode-plus). It is an independent, unofficial fork, not affiliated with or endorsed by the original author. It keeps the original [Elastic License 2.0](LICENSE) and copyright notices, and it is not offered as a hosted or managed service. Claude Code install: `claude plugin marketplace add PedroHenriqueNS/context-mode-plus`, then `claude plugin install context-mode@context-mode-plus`. Fork details: [docs/fork/](docs/fork/).
+
 **A free, local plugin for 10 coding agents. It keeps tool output out of your agent's context window and keeps all usage data on your machine. The plugin is free forever.**
 
 [![npm downloads](https://img.shields.io/npm/dt/context-mode?label=npm%20downloads)](https://www.npmjs.com/package/context-mode) [![GitHub stars](https://img.shields.io/github/stars/mksglu/context-mode?style=flat&color=yellow)](https://github.com/mksglu/context-mode) [![Discord](https://img.shields.io/discord/1478479412700909750?label=Discord&logo=discord&color=5865f2)](https://discord.gg/DCN9jUgN5v) [![License: ELv2](https://img.shields.io/badge/License-ELv2-blue.svg)](LICENSE)

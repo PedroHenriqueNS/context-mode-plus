@@ -1,54 +1,50 @@
 # Stack
 
+Base: upstream context-mode 2.1.7. Upstream's own reference: [docs/architecture/](architecture/).
+
 ## Languages and runtime
 
 | Item | Version | Notes |
 |---|---|---|
-| TypeScript | ^5.7 | `strict: true`, `module`/`moduleResolution: NodeNext`, target ES2022, `src/` → `build/` |
-| Node.js | ≥ 22.5 (`engines`) | CI pins 22.5; owner's machine runs 24.x |
-| Plain JavaScript (`.mjs`) | — | `hooks/`, `start.mjs`, `scripts/` run unbuilt |
-| Bun | 1.3.x | Installs deps from `bun.lock`; the executor prefers Bun for JS/TS when present |
+| Node.js | ≥ 24.15.0 (`engines`) | Runs the TypeScript in `src/` directly (type stripping); first version with `node:sqlite` unflagged. Owner's machine: 24.22 |
+| TypeScript | ^5.7 | `tsc --noEmit` only (type check); no compile step |
+| SQLite | `node:sqlite` | One `context.db` per project under `~/.context-mode`; FTS5 Porter + trigram tables |
 
-## Runtime dependencies
+No Bun and no native modules.
+
+## Dependencies
+
+Everything is dev-only: `npm install` brings the build and test tooling, and the shipped plugin is self-contained bundles.
 
 | Package | Version | Used for |
 |---|---|---|
-| `@modelcontextprotocol/sdk` | ^1.26.0 | MCP server transport and tool registry |
-| `better-sqlite3` | ^12.6.2 | SessionDB and ContentStore (FTS5) — native module, external to bundles |
-| `zod` | ^3.25.0 | Tool input schemas |
-| `turndown` + `turndown-plugin-gfm` + `@mixmark-io/domino` | ^7.2 / ^1.0 / ^2.2 | HTML → Markdown for `ctx_fetch_and_index` |
-| `@clack/prompts` | ^1.0.1 | CLI prompts (`setup`, `doctor`, `upgrade`) |
-| `picocolors` | ^1.1.1 | CLI colors |
+| esbuild | 0.24.0 | `server.mjs`, `hook.mjs`, `cli.mjs` bundles (target node24) |
+| `@modelcontextprotocol/sdk`, `@modelcontextprotocol/server` | ^1.26 / 2.3.1 | MCP server, bundled |
+| zod | ^3.25 | tool input schemas, bundled |
+| `@clack/prompts` | ^1.0.1 | CLI prompts, bundled |
+| htmlparser2 | ^12 | HTML → Markdown for `ctx_index` with `url` |
+| typescript, `@types/node` | ^5.7, ^22.19 | type check |
 
-## Dev tooling
+`package-lock.json` is git-ignored upstream; the fork follows that.
 
-| Tool | Version | Used for |
-|---|---|---|
-| esbuild | ^0.27.3 | `server.bundle.mjs`, `cli.bundle.mjs`, `hooks/*.bundle.mjs` |
-| vitest | ^4.0.18 | Test runner (`npm test`) |
-| tsx | ^4.21.0 | Running TS directly (`npx tsx src/cli.ts doctor`) |
-| `@types/*` | — | node, better-sqlite3, turndown |
+## Build and release outputs
 
-## Build outputs
-
-`npm run build` = `tsc` → `build/`, then esbuild bundles, then `scripts/assert-bundle.mjs` and `scripts/assert-asymmetric-drift.mjs`. Bundles are committed (the plugin runs from the git checkout Claude Code installs). Rules for producing them: [CONVENTIONS.md](CONVENTIONS.md#bundles).
+`npm run build` = `node build/build.mjs --out release-out` (bundles, manifests, `SHA256SUMS`). A release writes the built Claude Code plugin to `plugins/claude-code/` and the marketplace files ([CONVENTIONS.md](CONVENTIONS.md#releases)).
 
 ## Distribution
 
-- Claude Code plugin from this repo's own marketplace: `/plugin marketplace add PedroHenriqueNS/context-mode-plus`, then `/plugin install context-mode@context-mode-plus`.
-- Manifests: `.claude-plugin/plugin.json`, `.claude-plugin/marketplace.json` (plus other platforms' manifests kept from upstream).
-- Not published to npm.
+- Claude Code: `claude plugin marketplace add PedroHenriqueNS/context-mode-plus`, then `claude plugin install context-mode@context-mode-plus`.
+- Not published to npm. Upstream's `release.yml` (npm publish) is not used by the fork.
 
-## CI
+## Tests and CI
 
-GitHub Actions `.github/workflows/ci.yml`: Ubuntu, macOS and Windows on Node 22.5 — install, typecheck, build, bundle assertions, tests, CLI doctor. CI never commits bundles (upstream's `bundle.yml` bot was removed).
+- `node --test` unit files in `tests/`, e2e cases in `e2e/`, all run by `node scripts/gate.mjs --all` with a temp `HOME`.
+- `.github/workflows/ci.yml` is upstream's (Ubuntu, macOS, Windows).
 
 ## External integrations
 
 | Integration | Version | Relationship |
 |---|---|---|
-| Claude Code | — | Primary host: MCP server + hooks (`hooks/hooks.json`) |
-| RTK (rtk-ai/rtk) | 1.0.1 on the owner's machine | Separate PreToolUse/PostToolUse hooks; the fork detects RTK's Bash hook and reads `rtk pipeline show` in doctor |
-| Other agents (Codex, Gemini CLI, Cursor, OpenCode, Pi, …) | — | Upstream adapters kept, not exercised by the owner |
-
-> TODO: Record the RTK `rtk:posthook` decision and its measured effect once stage 2 runs (~2026-10-23).
+| Claude Code | 2.1.x | Primary host: plugin hooks (`hooks/claude-code.json`) + MCP server |
+| RTK (rtk-ai/rtk) | 1.0.1 on the owner's machine | Separate Bash PreToolUse hook. v2 never rewrites Bash input, so they do not collide; v2's PostToolUse replace also shortens RTK's output over 4 KB (`CTX_REPLACE_TRIGGER_BYTES`). No RTK check in doctor |
+| Other agents (Codex, Gemini CLI, Qwen, Pi, OpenCode, Copilot CLI, Kiro, VS Code, ZCode) | — | Upstream adapters kept, not exercised by the owner |

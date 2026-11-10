@@ -1,5 +1,7 @@
 # Features
 
+> **Describes the 1.x fork (`1.0.169-plus.3`).** In 2.x the tools are `ctx_execute` (with `file`), `ctx_batch`, `ctx_index` (with `url`), `ctx_search`, `ctx_resume`, `ctx_stats`, `ctx_doctor`, `ctx_upgrade`, `ctx_purge` ([tools.md](tools.md)). What happened to each fork feature: [ROADMAP.md](ROADMAP.md#phase-2--rebase-on-upstream-2x--217-plus1-2026-11-10).
+
 Upstream features first (inherited unchanged unless noted), then fork features. Release history: [fork/CHANGELOG.md](fork/CHANGELOG.md).
 
 ## Upstream (inherited)
