@@ -489,7 +489,9 @@ export const DECISION_OPTION_KEY = "option"; // rule 2: journal key of an option
 export const DECISION_LABEL_JOIN = " | "; // rule 1: multi-select labels
 
 // ctx_doctor D1 / ctx_upgrade release source (impl/07 §5 D1, ADR-0011; DEVIATIONS D-M5-arch-5)
-export const RELEASE_REPO_URL = "https://github.com/mksglu/context-mode.git"; // D1: git ls-remote --tags; ctx_upgrade: git clone of release
+// context-mode-plus: the fork is installed, released and reported as its own GitHub repo (never upstream).
+export const FORK_REPO_SLUG = "PedroHenriqueNS/context-mode-plus";
+export const RELEASE_REPO_URL = `https://github.com/${FORK_REPO_SLUG}.git`; // D1: git ls-remote --tags; ctx_upgrade: git clone of release
 export const RELEASE_BRANCH = "release"; // CI build output only (PRD §6)
 export const BUNDLE_SHA_DEFINE = "__CTX_BUNDLE_SHA__"; // the one esbuild `define` key the release build sets to the commit sha
 declare const __CTX_BUNDLE_SHA__: string | undefined;
@@ -599,6 +601,9 @@ export function D9_INDEX_DETAIL(sources: number, chunks: number): string { retur
 // Plugin root and git-checkout upgrade (impl/07 §1, §6; ADR-0010, ADR-0011).
 export const PLUGIN_CACHE_DIR_NAME = "cache"; // ~/.claude/plugins/cache/<marketplace>/context-mode (HOST_CONFIG_DIR_NAME, HOST_PLUGINS_DIR_NAME)
 export const PLUGIN_MARKETPLACE_NAME = "context-mode"; // ADR-0011 install: context-mode@context-mode
+// context-mode-plus: Claude Code installs the fork from its own marketplace (context-mode@context-mode-plus); the other
+// agents keep upstream ids, since their marketplace files are not renamed.
+export const CLAUDE_MARKETPLACE_NAME = "context-mode-plus";
 export const DATA_PLUGINS_DIR_NAME = "plugins"; // <DATA_ROOT>/plugins/<agent>/{current,<sha>}
 export const PLUGIN_CURRENT_LINK = "current"; // symlink to the active version dir
 export const PLUGIN_ROLLBACK_GENERATIONS = 1; // impl/07 §6 step 4d: one kept previous dir
@@ -801,7 +806,7 @@ export const UPGRADE_DATA_DELETED = "user data deleted"; // uninstall step 4 wit
 // D-R44-UPGRADE-NATIVE-1 (#1309, host audit pi-2 qwen-1 codex-2): ctx_upgrade prints each agent's own update command.
 // No agent clones a branch: the agent's own updater (or npm for the setup-route agents) fetches the latest release.
 export const UPGRADE_HOST_COMMAND: Readonly<Record<AgentId, string>> = Object.freeze({
-  "claude-code": "claude plugin marketplace update context-mode && claude plugin update context-mode@context-mode",
+  "claude-code": `claude plugin marketplace update ${CLAUDE_MARKETPLACE_NAME} && claude plugin update context-mode@${CLAUDE_MARKETPLACE_NAME}`,
   codex: "codex plugin marketplace upgrade context-mode",
   gemini: "gemini extensions update context-mode",
   qwen: "qwen extensions update context-mode",
@@ -1020,13 +1025,13 @@ export const DOCTOR_GH_NEXT = "  --";
 export const DOCTOR_NOTE_PREFIXES: readonly string[] = Object.freeze([
   DOCTOR_ENV_PREFIX, DOCTOR_DOCS_LABEL, DOCTOR_REPORT_LINE, DOCTOR_GH_LINE, DOCTOR_GH_NEXT.trim(), DOCTOR_URL_LINE, DOCTOR_RULES_LINE,
 ]);
-export const ISSUE_REPO_SLUG = "mksglu/context-mode";
+export const ISSUE_REPO_SLUG = FORK_REPO_SLUG;
 export const ISSUE_FORM_FILE = "agent-report.yml"; // .github/ISSUE_TEMPLATE/agent-report.yml
 export const ISSUE_GUIDE_URL = `https://github.com/${ISSUE_REPO_SLUG}/blob/main/.github/AGENT_ISSUE.md`;
 // D-INTAKE-SCORE-1: the numbered rules for the user's agent. AGENT_ISSUE.md and agent-report.yml print them word for
 // word, and the intake bot (.github/scripts/issue-intake.mjs ITEMS) checks the same facts; tests/0014 pins all three.
 export const ISSUE_AGENT_RULES: readonly string[] = Object.freeze([
-  "Search for the same problem first: `gh issue list -R mksglu/context-mode --state all --search \"<check id or error>\"`. When one matches, add your facts there as a comment.",
+  "Search for the same problem first: `gh issue list -R PedroHenriqueNS/context-mode-plus --state all --search \"<check id or error>\"`. When one matches, add your facts there as a comment.",
   "File one bug per issue.",
   "Call the `ctx_doctor` tool and paste its full output unchanged in the `ctx-report` field.",
   "Give the versions: context-mode, the agent, the OS and arch, and Node.",
@@ -1053,7 +1058,7 @@ export const DOCTOR_MASK = "<masked>";
 // D-DOCTOR-ISSUE-1: each agent's own native install command (docs/install/<agent>.md, first code block), so the
 // report names the route the user took and the repro script reinstalls the same way (owner rule: native install first).
 export const NATIVE_INSTALL: Readonly<Record<string, readonly string[]>> = Object.freeze({
-  "claude-code": ["claude plugin marketplace add mksglu/context-mode", "claude plugin install context-mode@context-mode"],
+  "claude-code": [`claude plugin marketplace add ${FORK_REPO_SLUG}`, `claude plugin install context-mode@${CLAUDE_MARKETPLACE_NAME}`],
   codex: ["codex plugin marketplace add mksglu/context-mode", "codex plugin add context-mode@context-mode"],
   gemini: ["gemini extensions install https://github.com/mksglu/context-mode"],
   qwen: ["qwen extensions install https://github.com/mksglu/context-mode:context-mode"],

@@ -14,7 +14,7 @@ import { parseArgs } from "node:util";
 import { LATEST_PROTOCOL_VERSION } from "@modelcontextprotocol/sdk/types.js";
 import {
   AGENT_ARG, AGENT_HOME_DIR, CONFIG_TOML_FILE, GIT_BIN, GIT_CLONE_ARGS, HOST_NODE_COMMAND,
-  OWN_MCP_ENTRY, PLUGIN_KEY_SEPARATOR, PLUGIN_MARKETPLACE_NAME, PLUGIN_NAME, RELEASE_BRANCH, RELEASE_REPO_URL,
+  OWN_MCP_ENTRY, CLAUDE_MARKETPLACE_NAME, PLUGIN_KEY_SEPARATOR, PLUGIN_MARKETPLACE_NAME, PLUGIN_NAME, RELEASE_BRANCH, RELEASE_REPO_URL,
   SERVER_ENTRY_FILE, SERVER_KEY, UPGRADE_GIT_TIMEOUT_MS,
 } from "../../src/core/contracts/constants.ts";
 import { pathEntries, spawnShim, whichBin } from "../../src/setup/spawn-bin.ts";
@@ -113,13 +113,13 @@ function claudeCode(env, home, a) {
   if (a.layout === MAIN_LAYOUT) {
     mkt = cloneRef(env, home, a, "main-clone"); // the repo root is the marketplace; its entry source is ./plugins/claude-code
   } else {
-    mkt = path.join(home, PLUGIN_MARKETPLACE_NAME);
+    mkt = path.join(home, CLAUDE_MARKETPLACE_NAME);
     fs.mkdirSync(path.join(mkt, ".claude-plugin"), { recursive: true });
-    const manifest = { name: PLUGIN_MARKETPLACE_NAME, owner: { name: SERVER_KEY },
+    const manifest = { name: CLAUDE_MARKETPLACE_NAME, owner: { name: SERVER_KEY },
       plugins: [{ name: PLUGIN_NAME, source: { source: "url", url: a.repo, ref: a.ref } }] };
     fs.writeFileSync(path.join(mkt, ".claude-plugin", "marketplace.json"), JSON.stringify(manifest));
   }
-  const id = PLUGIN_NAME + PLUGIN_KEY_SEPARATOR + PLUGIN_MARKETPLACE_NAME;
+  const id = PLUGIN_NAME + PLUGIN_KEY_SEPARATOR + CLAUDE_MARKETPLACE_NAME;
   must(run(env, home, claude, ["plugin", "marketplace", "add", mkt]));
   must(run(env, home, claude, ["plugin", "install", id]));
   const listed = JSON.parse(must(run(env, home, claude, ["plugin", "list", "--json"])).out);

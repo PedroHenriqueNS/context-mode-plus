@@ -5,7 +5,7 @@ import { existsSync, realpathSync } from "node:fs";
 import path from "node:path";
 
 import { ADAPTERS, getAdapter } from "../adapters/table.ts";
-import { AGENT_HOME_DIR, PLUGIN_MARKETPLACE_NAME, HOST_NODE_COMMAND, HOST_PLUGINS_DIR_NAME, INSTALLED_PLUGINS_FILE, MCP_ENV_FIELD, OPENCODE_BASE_CONFIG_FILE, OWN_MCP_ENTRY, SERVER_KEY, SETUP_BACKUP_DIR_NAME, TOOL_ORDER } from "../core/contracts/constants.ts";
+import { AGENT_HOME_DIR, CLAUDE_MARKETPLACE_NAME, HOST_NODE_COMMAND, HOST_PLUGINS_DIR_NAME, INSTALLED_PLUGINS_FILE, MCP_ENV_FIELD, OPENCODE_BASE_CONFIG_FILE, OWN_MCP_ENTRY, SERVER_KEY, SETUP_BACKUP_DIR_NAME, TOOL_ORDER } from "../core/contracts/constants.ts";
 import type { AgentId, AdapterRow, HostConfigFormat } from "../core/contracts/types.ts";
 import { claudeDirOf, claudeProfileEnv, copilotDirOf, geminiDirOf, kiroDirOf, opencodeDirOf, ownMcpFileOf } from "../core/project/config-dir.ts";
 import { ownMcpValue } from "../core/ops/host-config.ts";
@@ -18,6 +18,7 @@ export const STATE_DIR = ".context-mode";
 export const LOCK_FILE = "setup.lock";
 export const BACKUP_DIR = SETUP_BACKUP_DIR_NAME;
 const PLUGIN_ID = `${SERVER_KEY}@${SERVER_KEY}`;
+const CLAUDE_PLUGIN_ID = `${SERVER_KEY}@${CLAUDE_MARKETPLACE_NAME}`; // context-mode-plus
 const SKILLS_DIR_NAME = "skills";
 
 // Routing-instruction files: setup never writes them, even if a row lists one by mistake (ADR-0019 section 3).
@@ -232,7 +233,7 @@ function cliFor(ctx: SetupContext, id: AgentId): CliPlan | undefined {
   const s = serverCmd(ctx, id);
   switch (id) {
     case "claude-code":
-      return { bin: "claude", install: [["plugin", "marketplace", "add", ctx.pkgDir], ["plugin", "install", PLUGIN_ID]], remove: [["plugin", "uninstall", PLUGIN_ID]] };
+      return { bin: "claude", install: [["plugin", "marketplace", "add", ctx.pkgDir], ["plugin", "install", CLAUDE_PLUGIN_ID]], remove: [["plugin", "uninstall", CLAUDE_PLUGIN_ID]] };
     // D-INST-1: `extensions install <dir>` waits on a trust prompt even with --consent; `link` does not (ADR-0019 section 3).
     // Qwen has no consent flag, so its risk prompt gets `y` on stdin.
     case "gemini": return { bin: "gemini", install: [["extensions", "link", ctx.pkgDir, "--consent"]], remove: [["extensions", "uninstall", SERVER_KEY]] };
@@ -248,8 +249,8 @@ function cliFor(ctx: SetupContext, id: AgentId): CliPlan | undefined {
 function copyFor(ctx: SetupContext, id: AgentId): HostCopy | undefined {
   if (id !== "claude-code") return undefined;
   const file = path.join(claudeDirOf(ctx.env, ctx.home), HOST_PLUGINS_DIR_NAME, INSTALLED_PLUGINS_FILE);
-  return { host: "Claude Code", bin: "claude", plugin: PLUGIN_ID, file, refresh: ["plugin", "update", PLUGIN_ID], enable: ["plugin", "enable", PLUGIN_ID],
-    marketplace: ["plugin", "marketplace", "update", PLUGIN_MARKETPLACE_NAME], profile: claudeProfileEnv(ctx.env, ctx.platform ?? process.platform) };
+  return { host: "Claude Code", bin: "claude", plugin: CLAUDE_PLUGIN_ID, file, refresh: ["plugin", "update", CLAUDE_PLUGIN_ID], enable: ["plugin", "enable", CLAUDE_PLUGIN_ID],
+    marketplace: ["plugin", "marketplace", "update", CLAUDE_MARKETPLACE_NAME], profile: claudeProfileEnv(ctx.env, ctx.platform ?? process.platform) };
 }
 
 const LIST: Partial<Record<AgentId, { bin: string; args: string[] }>> = {

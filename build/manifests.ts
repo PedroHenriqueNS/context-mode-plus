@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 import path from "node:path";
 import { ADAPTERS, hasReplace } from "../src/adapters/table.ts";
 import type { AgentId } from "../src/core/contracts/agents.ts";
-import { KIRO_TOOL_MATCHERS, NODE_MIN, RELEASE_SUMS_FILE, SERVER_KEY } from "../src/core/contracts/constants.ts";
+import { KIRO_TOOL_MATCHERS, CLAUDE_MARKETPLACE_NAME, NODE_MIN, RELEASE_REPO_URL, RELEASE_SUMS_FILE, SERVER_KEY } from "../src/core/contracts/constants.ts";
 import type { AdapterRow } from "../src/core/contracts/types.ts";
 
 // Build-tool literals (same rule as build.mjs DEFAULT_OUT/BUNDLES; DEVIATIONS D-M3-A7-5).
@@ -242,7 +242,7 @@ export const OUT_FILES: readonly string[] = [
 ].slice().sort();
 // D-RN-REPO-1: npm provenance rejects a publish (E422) unless repository.url names the source repo. This is the
 // `npm pkg fix` form, so check-npm-tarball.mjs's "npm pkg fix is a no-op" gate still holds.
-const REPOSITORY = { type: "git", url: "git+https://github.com/mksglu/context-mode.git" };
+const REPOSITORY = { type: "git", url: `git+${RELEASE_REPO_URL}` }; // context-mode-plus: the fork repo
 const OUT_PACKAGE_KEYS: readonly string[] = ["bin", "bugs", "description", "engines", "exports", "files", "homepage", "keywords", "license", "main", "name", "pi", "repository", "type", "version"];
 const PI_KEYS: readonly string[] = ["extensions", "skills"];
 
@@ -309,7 +309,7 @@ export function generateManifests(outDir: string, version: string = DEV_VERSION,
     if (manifest !== null) files.push(manifest);
     if (row.installMode === "marketplace") { // D-INST-3: setup runs `claude plugin marketplace add <package dir>`
       files.push([".claude-plugin/marketplace.json", {
-        name: SERVER_KEY, owner: { name: SERVER_KEY }, // Claude Code rejects a marketplace file without an owner object
+        name: CLAUDE_MARKETPLACE_NAME, owner: { name: CLAUDE_MARKETPLACE_NAME }, // Claude Code rejects a marketplace file without an owner object
         description: devMeta().description, // D-R33-CC-META-1
         plugins: [{ name: SERVER_KEY, source: "./", description: devMeta().description, version, author: author() }],
       }]);

@@ -24,11 +24,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mksglu/context-mode.git"
+    "url": "git+https://github.com/PedroHenriqueNS/context-mode-plus.git"
   },
-  "homepage": "https://github.com/mksglu/context-mode#readme",
+  "homepage": "https://github.com/PedroHenriqueNS/context-mode-plus#readme",
   "bugs": {
-    "url": "https://github.com/mksglu/context-mode/issues"
+    "url": "https://github.com/PedroHenriqueNS/context-mode-plus/issues"
   },
   "scripts": {
     "build": "node build/build.mjs --out release-out",
